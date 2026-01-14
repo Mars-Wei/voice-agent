@@ -33,7 +33,9 @@
               "property": {
                 "params": {
                   "api_key": "${env:QWEN_API_KEY}",
-                  "language_hints": ["zh"]
+                  "language_hints": [
+                    "zh"
+                  ]
                 }
               }
             },
@@ -46,7 +48,8 @@
                 "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
                 "api_key": "${env:QWEN_API_KEY}",
                 "proxy_url": "${env:OPENAI_PROXY_URL|}",
-                "model": "${env:QWEN_MODEL|qwen-max}"
+                "model": "${env:QWEN_MODEL|qwen-max}",
+                "prompt": "You are a helpful voice assistant with access to memory tools for long-term conversation recall.\n\nMEMORY TOOLS AVAILABLE:\n1. add_memory - Add conversation turns to long-term memory\n2. retrieve_memory - Search for relevant past information\n3. get_memory_summary - Get user profile summary\n\nUse these tools appropriately:\n- Call add_memory after each meaningful conversation exchange\n- Call retrieve_memory when you need to recall specific information\n- Call get_memory_summary at conversation start to understand the user\n\nBe conversational and remember user details naturally."
               }
             },
             {
@@ -87,6 +90,13 @@
             },
             {
               "type": "extension",
+              "name": "zep_memory_tool_python",
+              "addon": "zep_memory_tool_python",
+              "extension_group": "default",
+              "property": {}
+            },
+            {
+              "type": "extension",
               "name": "streamid_adapter",
               "addon": "streamid_adapter",
               "property": {}
@@ -108,7 +118,10 @@
               "extension": "main_control",
               "cmd": [
                 {
-                  "names": ["on_user_joined", "on_user_left"],
+                  "names": [
+                    "on_user_joined",
+                    "on_user_left"
+                  ],
                   "source": [
                     {
                       "extension": "agora_rtc"
@@ -116,10 +129,22 @@
                   ]
                 },
                 {
-                  "names": ["tool_register"],
+                  "names": [
+                    "tool_register"
+                  ],
                   "source": [
                     {
                       "extension": "vision_tool_python"
+                    }
+                  ]
+                },
+                {
+                  "names": [
+                    "tool_register"
+                  ],
+                  "source": [
+                    {
+                      "extension": "zep_memory_tool_python"
                     }
                   ]
                 }

@@ -143,6 +143,9 @@
     },
     {
       "path": "../../../ten_packages/extension/vision_analyze_tool_python"
+    },
+    {
+      "path": "../../../ten_packages/extension/zep_memory_tool_python"
     }
   ],
   "scripts": {
