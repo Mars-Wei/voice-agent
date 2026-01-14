@@ -24,6 +24,7 @@ tasks:  # install scripts
     dir: ./tenapp
     cmds:
       - ./scripts/install_python_deps.sh
+      - uv pip install --system zep-cloud>=3.0.0
 
   build-api-server:
     desc: build api server

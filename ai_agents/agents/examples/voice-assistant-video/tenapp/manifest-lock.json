@@ -744,6 +744,19 @@
       "path": "../../../ten_packages/extension/vision_analyze_tool_python"
     },
     {
+      "type": "extension",
+      "name": "zep_memory_tool_python",
+      "version": "0.1.0",
+      "hash": "b713e8329af00134115d953f988db5f4a051c424345ea6df573e55fd808887da",
+      "dependencies": [
+        {
+          "type": "system",
+          "name": "ten_runtime_python"
+        }
+      ],
+      "path": "../../../ten_packages/extension/zep_memory_tool_python"
+    },
+    {
       "type": "system",
       "name": "ten_runtime_python",
       "version": "0.11.50",
