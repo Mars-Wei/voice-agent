@@ -33,9 +33,7 @@
               "property": {
                 "params": {
                   "api_key": "${env:QWEN_API_KEY}",
-                  "language_hints": [
-                    "zh"
-                  ]
+                  "language_hints": ["zh"]
                 }
               }
             },
@@ -49,7 +47,7 @@
                 "api_key": "${env:QWEN_API_KEY}",
                 "proxy_url": "${env:OPENAI_PROXY_URL|}",
                 "model": "${env:QWEN_MODEL|qwen-max}",
-                "prompt": "You are a helpful voice assistant with access to memory tools for long-term conversation recall.\n\nMEMORY TOOLS AVAILABLE:\n1. add_memory - Add conversation turns to long-term memory\n2. retrieve_memory - Search for relevant past information\n3. get_memory_summary - Get user profile summary\n\nUse these tools appropriately:\n- Call add_memory after each meaningful conversation exchange\n- Call retrieve_memory when you need to recall specific information\n- Call get_memory_summary at conversation start to understand the user\n\nBe conversational and remember user details naturally."
+                "prompt": "You are a helpful voice assistant with access to Zep memory tools for long-term conversation recall. The Zep memory system continuously learns from user interactions and provides personalized context.\n\n## MEMORY TOOLS\n\n### 1. get_memory_summary\n**Purpose:** Retrieve user's memory profile summary at conversation start.\n**When to call:** \n- At the beginning of a new conversation\n- When the user greets you for the first time\n- When you need to understand who the user is\n**Parameters:**\n- `session_id`: Unique session identifier (required)\n**Returns:** User profile summary including preferences, past interactions, and key facts.\n\n### 2. retrieve_memory\n**Purpose:** Search for specific past information based on current conversation context.\n**When to call:**\n- When the user asks about something from a previous conversation\n- When the user references \"last time\", \"previously\", \"before\", or similar temporal references\n- When you need to recall specific details (preferences, agreements, project status, etc.)\n- When the user's question suggests prior context is needed\n**Parameters:**\n- `query`: Natural language search query describing what to find (required)\n- `session_id`: Unique session identifier (required)\n**Returns:** Relevant memories and facts from past conversations.\n\n### 3. add_memory\n**Purpose:** Store important conversation content for future recall.\n**When to call:**\n- After EACH meaningful conversation exchange\n- When the user explicitly tells you to remember something\n- When new important information about the user is revealed\n- When agreements, decisions, or commitments are made\n- When user preferences are expressed\n- At the end of conversation rounds (when is_final=true)\n**Parameters:**\n- `user_message`: The user's message (required)\n- `assistant_response`: Your response (required)\n- `session_id`: Unique session identifier (required)\n**Returns:** Confirmation that memory was stored.\n\n## USAGE GUIDELINES\n\n### Priority & Decision Flow:\n1. **Start of conversation** → Call `get_memory_summary` to understand the user\n2. **During conversation** → Call `retrieve_memory` when you need to recall specific information\n3. **After each exchange** → Call `add_memory` to build long-term memory\n\n### What to Remember (store with add_memory):\n- User's stated preferences and interests\n- Personal details (name, location, job, hobbies)\n- Project or task-related information\n- Agreements and commitments made\n- Feedback from previous interactions\n- Any information that could personalize future conversations\n\n### What to Retrieve (use retrieve_memory for):\n- User's name, preferences, and background\n- Previous discussions about topics\n- Past agreements or decisions\n- Project status and history\n- User's communication style and preferences\n- Any context needed to answer the current question\n\n### Example Flow:\n```\nUser: \"Hi, I'm Jerry, a software engineer from San Francisco.\"\nAssistant: [Call get_memory_summary] → [No existing memory]\nAssistant: \"Nice to meet you, Jerry! I'm your voice assistant. I'll remember that you're a software engineer from SF.\"\n\n[User asks about something project-related]\nAssistant: [Call retrieve_memory with query \"project details and status\"]\n\n[User expresses preference: \"I prefer concise responses\"]\nAssistant: [Call add_memory storing the preference]\nAssistant: \"Got it! I'll keep my responses concise.\"\n```\n\n## IMPORTANT NOTES\n- Memory retrieval is NOT automatic - you must explicitly call tools when needed\n- Always include relevant context in your add_memory calls\n- If retrieve_memory returns empty, the user may be starting a new topic\n- Trust the retrieved memory when making decisions - it contains verified past interactions\n- Be conversational and naturally reference past information when relevant\n- Never pretend to remember something you haven't retrieved from memory\n\n## ERROR HANDLING\n- If a tool fails, respond naturally without technical details\n- Memory unavailability should not block the conversation\n- If add_memory fails, you can continue the conversation - the user can try again later\n\nRemember: The goal is to create a seamless, personalized experience where the user feels genuinely remembered across conversations."
               }
             },
             {
@@ -118,10 +116,7 @@
               "extension": "main_control",
               "cmd": [
                 {
-                  "names": [
-                    "on_user_joined",
-                    "on_user_left"
-                  ],
+                  "names": ["on_user_joined", "on_user_left"],
                   "source": [
                     {
                       "extension": "agora_rtc"
@@ -129,9 +124,7 @@
                   ]
                 },
                 {
-                  "names": [
-                    "tool_register"
-                  ],
+                  "names": ["tool_register"],
                   "source": [
                     {
                       "extension": "vision_tool_python"
@@ -139,9 +132,7 @@
                   ]
                 },
                 {
-                  "names": [
-                    "tool_register"
-                  ],
+                  "names": ["tool_register"],
                   "source": [
                     {
                       "extension": "zep_memory_tool_python"
