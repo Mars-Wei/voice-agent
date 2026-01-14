@@ -234,6 +234,29 @@
                   ]
                 }
               ]
+            },
+            {
+              "extension": "zep_memory_tool_python",
+              "data": [
+                {
+                  "name": "asr_result",
+                  "source": [
+                    {
+                      "extension": "stt"
+                    }
+                  ]
+                }
+              ],
+              "cmd": [
+                {
+                  "name": "chat_completion",
+                  "dest": [
+                    {
+                      "extension": "llm"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

@@ -104,6 +104,8 @@ core/src/ten_manager/tests/test_data/cmd_builtin_function_install_all/manifest-l
 
 # ===============================
 # ai_agents
+# Auto-generated manifest lock files
+ai_agents/agents/examples/voice-assistant-video/tenapp/manifest-lock.json
 
 # next.js
 ai_agents/.next/
