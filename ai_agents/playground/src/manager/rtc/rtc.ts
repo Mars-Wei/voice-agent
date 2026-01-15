@@ -147,6 +147,25 @@ export class RtcManager extends AGEventEmitter<RtcEvents> {
     this.client.on("network-quality", (quality) => {
       this.emit("networkQuality", quality);
     });
+    this.client.on("connection-state-change", (curState, revState) => {
+      console.log("[RTC] Connection state changed:", {
+        current: curState,
+        previous: revState,
+      });
+      // Handle connection state changes
+      if (curState === "DISCONNECTED" || curState === "FAILED") {
+        console.error("[RTC] Connection lost or failed:", curState);
+        // Emit connection error event
+        this.emit("connectionError", { state: curState });
+      }
+    });
+    this.client.on("exception", (evt: any) => {
+      console.error("[RTC] Exception occurred:", evt);
+      this.emit("connectionError", { error: evt });
+    });
+    this.client.on("token-privilege-will-expire", () => {
+      console.warn("[RTC] Token will expire soon");
+    });
     this.client.on("user-published", async (user, mediaType) => {
       await this.client.subscribe(user, mediaType);
       if (mediaType === "audio") {

@@ -33,7 +33,9 @@
               "property": {
                 "params": {
                   "api_key": "${env:QWEN_API_KEY}",
-                  "language_hints": ["zh"]
+                  "language_hints": [
+                    "zh"
+                  ]
                 }
               }
             },
@@ -116,7 +118,10 @@
               "extension": "main_control",
               "cmd": [
                 {
-                  "names": ["on_user_joined", "on_user_left"],
+                  "names": [
+                    "on_user_joined",
+                    "on_user_left"
+                  ],
                   "source": [
                     {
                       "extension": "agora_rtc"
@@ -124,7 +129,9 @@
                   ]
                 },
                 {
-                  "names": ["tool_register"],
+                  "names": [
+                    "tool_register"
+                  ],
                   "source": [
                     {
                       "extension": "vision_tool_python"
@@ -132,7 +139,9 @@
                   ]
                 },
                 {
-                  "names": ["tool_register"],
+                  "names": [
+                    "tool_register"
+                  ],
                   "source": [
                     {
                       "extension": "zep_memory_tool_python"
@@ -228,16 +237,6 @@
             },
             {
               "extension": "zep_memory_tool_python",
-              "data": [
-                {
-                  "name": "asr_result",
-                  "source": [
-                    {
-                      "extension": "stt"
-                    }
-                  ]
-                }
-              ],
               "cmd": [
                 {
                   "name": "chat_completion",

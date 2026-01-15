@@ -23,6 +23,7 @@ export interface RtcEvents {
   localTracksChanged: (tracks: IUserTracks) => void;
   networkQuality: (quality: NetworkQuality) => void;
   textChanged: (text: IChatItem) => void;
+  connectionError: (error: { state?: string; error?: any }) => void;
 }
 
 export interface IUserTracks {

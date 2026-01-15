@@ -97,7 +97,23 @@ export default function ChatPage({ className }: ChatPageProps) {
             console.log("[ChatPage] Audio track:", tracks?.audioTrack ? "exists" : "missing");
             if (tracks?.audioTrack) {
                 console.log("[ChatPage] Setting audio track");
-                setAudioTrack(tracks.audioTrack);
+                const track = tracks.audioTrack;
+
+                // Ensure audio track is not muted
+                if (track.muted) {
+                    console.warn("[ChatPage] Audio track is muted, unmuting...");
+                    track.setMuted(false);
+                }
+
+                // Monitor track state
+                const mediaTrack = track.getMediaStreamTrack();
+                if (mediaTrack.readyState === "ended") {
+                    console.error("[ChatPage] Audio track has ended!");
+                } else {
+                    console.log("[ChatPage] Audio track state:", mediaTrack.readyState, "muted:", mediaTrack.muted);
+                }
+
+                setAudioTrack(track);
             }
         };
 
@@ -105,7 +121,15 @@ export default function ChatPage({ className }: ChatPageProps) {
         console.log("[ChatPage] Initial check - rtcManager.localTracks:", rtcManager.localTracks);
         if (rtcManager.localTracks?.audioTrack) {
             console.log("[ChatPage] Found initial audio track");
-            setAudioTrack(rtcManager.localTracks.audioTrack);
+            const track = rtcManager.localTracks.audioTrack;
+
+            // Ensure audio track is not muted
+            if (track.muted) {
+                console.warn("[ChatPage] Initial audio track is muted, unmuting...");
+                track.setMuted(false);
+            }
+
+            setAudioTrack(track);
         } else {
             console.log("[ChatPage] No initial audio track found");
         }
@@ -122,6 +146,7 @@ export default function ChatPage({ className }: ChatPageProps) {
 
         const { rtmManager } = require("@/manager/rtm");
         const { rtcManager } = require("@/manager/rtc/rtc");
+        const { apiPing } = require("@/common/request");
 
         // Listen to RTM messages
         rtmManager.on("rtmMessage", onTextChanged);
@@ -129,11 +154,58 @@ export default function ChatPage({ className }: ChatPageProps) {
         // Listen to RTC textChanged events
         rtcManager.on("textChanged", onRtcTextChanged);
 
+        // Listen to RTC connection errors
+        const onConnectionError = (error: any) => {
+            console.error("[ChatPage] RTC connection error:", error);
+            // You can add reconnection logic here if needed
+        };
+        rtcManager.on("connectionError", onConnectionError);
+
+        // Monitor audio track state
+        const checkAudioTrack = () => {
+            if (audioTrack) {
+                const track = audioTrack.getMediaStreamTrack();
+                if (track.readyState === "ended") {
+                    console.warn("[ChatPage] Audio track ended, attempting to recreate...");
+                    // Track ended, might need to recreate
+                } else if (track.muted) {
+                    console.warn("[ChatPage] Audio track is muted");
+                }
+            }
+        };
+
+        // Health check: ping backend service periodically
+        const healthCheck = async () => {
+            if (options.channel && agentConnected) {
+                try {
+                    const result = await apiPing(options.channel);
+                    console.log("[ChatPage] Health check ping result:", result);
+                    if (result?.code !== 0) {
+                        console.error("[ChatPage] Health check failed:", result);
+                    }
+                } catch (error) {
+                    console.error("[ChatPage] Health check error:", error);
+                }
+            }
+        };
+
+        // Check audio track state periodically
+        const audioCheckInterval = setInterval(checkAudioTrack, 5000);
+
+        // Health check every 30 seconds
+        const healthCheckInterval = setInterval(healthCheck, 30000);
+
+        // Initial health check after 5 seconds
+        setTimeout(healthCheck, 5000);
+
         return () => {
             rtmManager.off("rtmMessage", onTextChanged);
             rtcManager.off("textChanged", onRtcTextChanged);
+            rtcManager.off("connectionError", onConnectionError);
+            clearInterval(audioCheckInterval);
+            clearInterval(healthCheckInterval);
         };
-    }, [onTextChanged, onRtcTextChanged]);
+    }, [onTextChanged, onRtcTextChanged, audioTrack, options.channel, agentConnected]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(e.target.value);
