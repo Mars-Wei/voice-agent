@@ -67,9 +67,21 @@ const AuthInitializer = (props: AuthInitializerProps) => {
           dispatch(setSelectedGraphId(graphId));
           urlParamApplied.current = true;
         }
+      } else {
+        // Auto-select "voice_assistant" graph if no URL param and no selected graph
+        if (!selectedGraphId) {
+          const voiceAssistantGraph = graphList.find(
+            (g) => g.name === "voice_assistant"
+          );
+          if (voiceAssistantGraph) {
+            const graphId = voiceAssistantGraph.graph_id || voiceAssistantGraph.name;
+            dispatch(setSelectedGraphId(graphId));
+            urlParamApplied.current = true;
+          }
+        }
       }
     }
-  }, [graphList, dispatch]);
+  }, [graphList, dispatch, selectedGraphId]);
 
   useEffect(() => {
     if (selectedGraphId) {

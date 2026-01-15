@@ -225,12 +225,18 @@ class ZepMemoryToolExtension(AsyncLLMToolBaseExtension):
             )
 
     async def _add_memory(self, ten_env: AsyncTenEnv, args: dict) -> str:
-        """Add conversation to Zep memory"""
+        """Add conversation to Zep memory
+
+        According to Zep best practices:
+        - user_id: Unique identifier for the user (in voice assistant, we use session_id as user_id)
+        - thread_id: Unique identifier for the conversation thread (we use session_id as thread_id)
+        """
         from zep_cloud.types import Message
 
         session_id = args.get("session_id", "default")
-        thread_id = f"session_{session_id}"
-        user_id = args.get("user_id", session_id)  # Use session_id as user_id if not provided
+        # In voice assistant scenario, each session corresponds to one user and one thread
+        user_id = session_id  # Use session_id as user_id
+        thread_id = session_id  # Use session_id as thread_id (no prefix needed)
 
         messages = [
             Message(role="user", content=args["user_message"]),
@@ -238,45 +244,52 @@ class ZepMemoryToolExtension(AsyncLLMToolBaseExtension):
         ]
 
         try:
-            # Ensure user exists
+            # Ensure user exists (create if not exists)
             try:
                 self.zep_client.user.get(user_id=user_id)
+                ten_env.log_debug(f"[ZepMemoryTool] User {user_id} already exists")
             except Exception as e:
                 if "not found" in str(e).lower() or "404" in str(e) or "user not found" in str(e).lower():
                     ten_env.log_info(f"[ZepMemoryTool] Creating user {user_id}")
                     self.zep_client.user.add(user_id=user_id)
                 else:
+                    ten_env.log_error(f"[ZepMemoryTool] Error getting user {user_id}: {e}")
                     raise
 
-            # Ensure thread exists
+            # Ensure thread exists (create if not exists)
             try:
                 self.zep_client.thread.get(thread_id=thread_id)
+                ten_env.log_debug(f"[ZepMemoryTool] Thread {thread_id} already exists")
             except Exception as e:
                 if "not found" in str(e).lower() or "404" in str(e) or "thread not found" in str(e).lower():
                     ten_env.log_info(f"[ZepMemoryTool] Creating thread {thread_id} for user {user_id}")
                     self.zep_client.thread.create(thread_id=thread_id, user_id=user_id)
                 else:
+                    ten_env.log_error(f"[ZepMemoryTool] Error getting thread {thread_id}: {e}")
                     raise
 
             # Add messages to thread
             self.zep_client.thread.add_messages(thread_id=thread_id, messages=messages)
-            ten_env.log_info(f"[ZepMemoryTool] Memory added to thread {thread_id}")
+            ten_env.log_info(f"[ZepMemoryTool] Memory added to thread {thread_id} for user {user_id}")
             return "Memory added successfully"
         except Exception as e:
+            ten_env.log_error(f"[ZepMemoryTool] Failed to add memory: {e}")
             raise Exception(f"Failed to add memory: {str(e)}")
 
     async def _retrieve_memory(self, ten_env: AsyncTenEnv, args: dict) -> str:
         """Retrieve relevant memories based on query"""
         session_id = args.get("session_id", "default")
-        thread_id = f"session_{session_id}"
+        thread_id = session_id  # Use session_id as thread_id
 
         try:
             # Ensure thread exists (it should, but check anyway)
             try:
                 self.zep_client.thread.get(thread_id=thread_id)
             except Exception as e:
-                if "not found" in str(e).lower() or "404" in str(e):
+                if "not found" in str(e).lower() or "404" in str(e) or "thread not found" in str(e).lower():
+                    ten_env.log_info(f"[ZepMemoryTool] Thread {thread_id} does not exist yet")
                     return "No context available. Thread does not exist yet."
+                ten_env.log_error(f"[ZepMemoryTool] Error getting thread {thread_id}: {e}")
                 raise
 
             context_response = self.zep_client.thread.get_user_context(
@@ -284,25 +297,30 @@ class ZepMemoryToolExtension(AsyncLLMToolBaseExtension):
             )
 
             if hasattr(context_response, "context") and context_response.context:
+                ten_env.log_info(f"[ZepMemoryTool] Retrieved context for thread {thread_id}")
                 return f"Available context:\n{context_response.context}"
             else:
+                ten_env.log_info(f"[ZepMemoryTool] No context available for thread {thread_id}")
                 return "No context available."
 
         except Exception as e:
+            ten_env.log_error(f"[ZepMemoryTool] Failed to retrieve memory: {e}")
             raise Exception(f"Failed to retrieve memory: {str(e)}")
 
     async def _get_memory_summary(self, ten_env: AsyncTenEnv, args: dict) -> str:
         """Get user memory summary"""
         session_id = args.get("session_id", "default")
-        thread_id = f"session_{session_id}"
+        thread_id = session_id  # Use session_id as thread_id
 
         try:
             # Ensure thread exists (it should, but check anyway)
             try:
                 self.zep_client.thread.get(thread_id=thread_id)
             except Exception as e:
-                if "not found" in str(e).lower() or "404" in str(e):
+                if "not found" in str(e).lower() or "404" in str(e) or "thread not found" in str(e).lower():
+                    ten_env.log_info(f"[ZepMemoryTool] Thread {thread_id} does not exist yet")
                     return "No memory context available. This appears to be a new session."
+                ten_env.log_error(f"[ZepMemoryTool] Error getting thread {thread_id}: {e}")
                 raise
 
             context_response = self.zep_client.thread.get_user_context(
@@ -310,9 +328,12 @@ class ZepMemoryToolExtension(AsyncLLMToolBaseExtension):
             )
 
             if hasattr(context_response, "context") and context_response.context:
+                ten_env.log_info(f"[ZepMemoryTool] Retrieved memory summary for thread {thread_id}")
                 return f"Memory context:\n{context_response.context}"
             else:
+                ten_env.log_info(f"[ZepMemoryTool] No memory context available for thread {thread_id}")
                 return "No memory context available. This appears to be a new session."
 
         except Exception as e:
+            ten_env.log_error(f"[ZepMemoryTool] Failed to get memory summary: {e}")
             raise Exception(f"Failed to get memory summary: {str(e)}")

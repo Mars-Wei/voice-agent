@@ -52,32 +52,57 @@ export class RtmManager extends AGEventEmitter<IRtmEvents> {
     this.userId = userId;
     this.appId = appId;
     this.token = token;
-    const rtm = new AgoraRTM.RTM(appId, String(userId), {
-      logLevel: "debug", // TODO: use INFO
-      // update config: https://doc.shengwang.cn/api-ref/rtm2/javascript/toc-configuration/configuration#rtmConfig
-    });
-    await rtm.login({ token });
+
     try {
-      // subscribe message channel(will be created automatically)
-      const subscribeResult = await rtm.subscribe(channel, {
-        withMessage: true,
-        withPresence: true,
-        beQuiet: false,
-        withMetadata: true,
-        withLock: true,
+      const rtm = new AgoraRTM.RTM(appId, String(userId), {
+        logLevel: "debug", // TODO: use INFO
+        // update config: https://doc.shengwang.cn/api-ref/rtm2/javascript/toc-configuration/configuration#rtmConfig
       });
-      console.log(
-        "[RTM] Subscribe Message Channel success!: ",
-        subscribeResult
-      );
 
-      this._joined = true;
-      this._client = rtm;
+      try {
+        await rtm.login({ token });
+        console.log("[RTM] Login successful");
+      } catch (loginError: any) {
+        console.error("[RTM] Login failed:", loginError);
+        throw new Error(`RTM login failed: ${loginError?.code || loginError?.message || loginError}`);
+      }
 
-      // listen events
-      this._listenRtmEvents();
-    } catch (status) {
-      console.error("Failed to Create/Join Message Channel", status);
+      try {
+        // subscribe message channel(will be created automatically)
+        const subscribeResult = await rtm.subscribe(channel, {
+          withMessage: true,
+          withPresence: true,
+          beQuiet: false,
+          withMetadata: true,
+          withLock: true,
+        });
+        console.log(
+          "[RTM] Subscribe Message Channel success!: ",
+          subscribeResult
+        );
+
+        this._joined = true;
+        this._client = rtm;
+
+        // listen events
+        this._listenRtmEvents();
+      } catch (subscribeError: any) {
+        console.error("[RTM] Failed to Create/Join Message Channel:", subscribeError);
+        // Try to logout if login succeeded but subscribe failed
+        try {
+          await rtm.logout();
+        } catch (logoutError) {
+          console.error("[RTM] Logout error:", logoutError);
+        }
+        throw new Error(
+          `RTM subscribe failed (Error Code: ${subscribeError?.code || 'unknown'}): ${subscribeError?.message || subscribeError}. ` +
+          `This usually means RTM service is not enabled in your Agora project. ` +
+          `You can continue using the app, but RTM text messaging features will be unavailable.`
+        );
+      }
+    } catch (error: any) {
+      console.error("[RTM] Initialization failed:", error);
+      throw error;
     }
   }
 
