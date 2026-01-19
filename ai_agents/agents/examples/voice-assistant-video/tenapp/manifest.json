@@ -146,6 +146,12 @@
     },
     {
       "path": "../../../ten_packages/extension/zep_memory_tool_python"
+    },
+    {
+      "path": "../../../ten_packages/extension/schedule_tool_python"
+    },
+    {
+      "path": "../../../ten_packages/extension/memo_tool_python"
     }
   ],
   "scripts": {

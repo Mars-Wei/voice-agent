@@ -171,6 +171,11 @@ class MainControlExtension(AsyncExtension):
         data_name = data.get_name()
         ten_env.log_debug(f"[DEBUG] on_data received: name={data_name}")
 
+        # 处理提醒通知
+        if data_name == "reminder_notification":
+            await self._handle_reminder_notification(data)
+            return
+
         # ⭐ 监听 TTS 的 metrics 数据（包含 ttfb）
         if data_name == "metrics":
             ten_env.log_debug(f"[DEBUG] Received metrics data")
@@ -178,6 +183,33 @@ class MainControlExtension(AsyncExtension):
 
         # 原有的 on_data 逻辑
         await self.agent.on_data(data)
+
+    async def _handle_reminder_notification(self, data: Data):
+        """处理来自 schedule_tool_python 的提醒通知"""
+        try:
+            reminder_json, _ = data.get_property_to_json(None)
+            reminder = (
+                json.loads(reminder_json)
+                if isinstance(reminder_json, str)
+                else reminder_json
+            )
+
+            text = reminder.get("text", "")
+            if text:
+                # 生成更自然的提醒语句
+                reminder_message = f"您有一个提醒：{text}"
+
+                # 发送到TTS
+                await self._send_to_tts(reminder_message, True)
+                await self._send_transcript("assistant", reminder_message, True, 100)
+
+                self.ten_env.log_info(
+                    f"[MainControlExtension] Handled reminder notification: {text}"
+                )
+        except Exception as e:
+            self.ten_env.log_error(
+                f"Error handling reminder notification: {e}\n{traceback.format_exc()}"
+            )
 
     async def _handle_tts_metrics(self, data: Data):
         """⭐ 处理 TTS 返回的 metrics，计算完整 E2E 延迟"""

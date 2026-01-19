@@ -97,6 +97,20 @@
             },
             {
               "type": "extension",
+              "name": "schedule_tool_python",
+              "addon": "schedule_tool_python",
+              "extension_group": "default",
+              "property": {}
+            },
+            {
+              "type": "extension",
+              "name": "memo_tool_python",
+              "addon": "memo_tool_python",
+              "extension_group": "default",
+              "property": {}
+            },
+            {
+              "type": "extension",
               "name": "streamid_adapter",
               "addon": "streamid_adapter",
               "property": {}
@@ -147,6 +161,26 @@
                       "extension": "zep_memory_tool_python"
                     }
                   ]
+                },
+                {
+                  "names": [
+                    "tool_register"
+                  ],
+                  "source": [
+                    {
+                      "extension": "schedule_tool_python"
+                    }
+                  ]
+                },
+                {
+                  "names": [
+                    "tool_register"
+                  ],
+                  "source": [
+                    {
+                      "extension": "memo_tool_python"
+                    }
+                  ]
                 }
               ],
               "data": [
@@ -163,6 +197,14 @@
                   "source": [
                     {
                       "extension": "tts"
+                    }
+                  ]
+                },
+                {
+                  "name": "reminder_notification",
+                  "source": [
+                    {
+                      "extension": "schedule_tool_python"
                     }
                   ]
                 }
@@ -237,6 +279,32 @@
             },
             {
               "extension": "zep_memory_tool_python",
+              "cmd": [
+                {
+                  "name": "chat_completion",
+                  "dest": [
+                    {
+                      "extension": "llm"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "extension": "schedule_tool_python",
+              "cmd": [
+                {
+                  "name": "chat_completion",
+                  "dest": [
+                    {
+                      "extension": "llm"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "extension": "memo_tool_python",
               "cmd": [
                 {
                   "name": "chat_completion",
