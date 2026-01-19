@@ -149,9 +149,6 @@
     },
     {
       "path": "../../../ten_packages/extension/schedule_tool_python"
-    },
-    {
-      "path": "../../../ten_packages/extension/memo_tool_python"
     }
   ],
   "scripts": {

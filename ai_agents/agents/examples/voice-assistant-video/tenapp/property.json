@@ -104,13 +104,6 @@
             },
             {
               "type": "extension",
-              "name": "memo_tool_python",
-              "addon": "memo_tool_python",
-              "extension_group": "default",
-              "property": {}
-            },
-            {
-              "type": "extension",
               "name": "streamid_adapter",
               "addon": "streamid_adapter",
               "property": {}
@@ -169,16 +162,6 @@
                   "source": [
                     {
                       "extension": "schedule_tool_python"
-                    }
-                  ]
-                },
-                {
-                  "names": [
-                    "tool_register"
-                  ],
-                  "source": [
-                    {
-                      "extension": "memo_tool_python"
                     }
                   ]
                 }
@@ -292,19 +275,6 @@
             },
             {
               "extension": "schedule_tool_python",
-              "cmd": [
-                {
-                  "name": "chat_completion",
-                  "dest": [
-                    {
-                      "extension": "llm"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "extension": "memo_tool_python",
               "cmd": [
                 {
                   "name": "chat_completion",

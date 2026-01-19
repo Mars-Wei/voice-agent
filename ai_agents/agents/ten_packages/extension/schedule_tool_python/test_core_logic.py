@@ -232,6 +232,7 @@ def test_database_operations():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS schedules (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
                 session_id TEXT NOT NULL,
                 title TEXT NOT NULL,
                 description TEXT,
@@ -251,9 +252,9 @@ def test_database_operations():
         future_time = (datetime.now() + timedelta(hours=1)).isoformat()
         cursor.execute('''
             INSERT INTO schedules
-            (session_id, title, description, schedule_type, scheduled_time, created_at, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', ("test_session", "测试任务", "描述", "reminder", future_time, datetime.now().isoformat(), "pending"))
+            (user_id, session_id, title, description, schedule_type, scheduled_time, created_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ("test_user", "test_session", "测试任务", "描述", "reminder", future_time, datetime.now().isoformat(), "pending"))
         task_id_1 = cursor.lastrowid
         print(f"✓ 插入单次任务成功，ID: {task_id_1}")
 
@@ -262,19 +263,19 @@ def test_database_operations():
         next_time = calculate_next_recurrence(tomorrow_10am, "daily")
         cursor.execute('''
             INSERT INTO schedules
-            (session_id, title, schedule_type, scheduled_time, created_at, status, recurrence_rule, next_scheduled_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', ("test_session", "每天吃药", "reminder", tomorrow_10am.isoformat(),
+            (user_id, session_id, title, schedule_type, scheduled_time, created_at, status, recurrence_rule, next_scheduled_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ("test_user", "test_session", "每天吃药", "reminder", tomorrow_10am.isoformat(),
               datetime.now().isoformat(), "pending", "daily", next_time.isoformat()))
         task_id_2 = cursor.lastrowid
         print(f"✓ 插入重复任务成功，ID: {task_id_2}")
 
-        # 测试3: 查询任务
+        # 测试3: 查询任务（按 user_id）
         cursor.execute('''
             SELECT id, title, recurrence_rule, next_scheduled_time
             FROM schedules
-            WHERE session_id = ?
-        ''', ("test_session",))
+            WHERE user_id = ?
+        ''', ("test_user",))
         rows = cursor.fetchall()
         assert len(rows) == 2, f"应该找到2个任务，实际找到{len(rows)}个"
         print(f"✓ 查询任务成功，找到 {len(rows)} 个任务")

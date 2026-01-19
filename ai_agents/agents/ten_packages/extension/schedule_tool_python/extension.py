@@ -92,6 +92,7 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS schedules (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
                 session_id TEXT NOT NULL,
                 title TEXT NOT NULL,
                 description TEXT,
@@ -128,6 +129,31 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
             cursor.execute('ALTER TABLE schedules ADD COLUMN next_scheduled_time TEXT')
         except sqlite3.OperationalError:
             pass  # 字段已存在
+
+        # 迁移旧数据：如果表没有 user_id 字段，添加它（默认使用 session_id 作为 user_id）
+        try:
+            cursor.execute('ALTER TABLE schedules ADD COLUMN user_id TEXT')
+            cursor.execute('UPDATE schedules SET user_id = session_id WHERE user_id IS NULL')
+            conn.commit()  # 提交更改，确保字段已添加
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
+
+        # 在 user_id 字段添加后创建索引
+        try:
+            cursor.execute('''
+                CREATE INDEX IF NOT EXISTS idx_user_status
+                ON schedules(user_id, status)
+            ''')
+        except sqlite3.OperationalError:
+            pass  # 如果字段不存在，跳过索引创建
+
+        try:
+            cursor.execute('''
+                CREATE INDEX IF NOT EXISTS idx_user_session
+                ON schedules(user_id, session_id)
+            ''')
+        except sqlite3.OperationalError:
+            pass  # 如果字段不存在，跳过索引创建
 
         conn.commit()
         conn.close()
@@ -170,9 +196,15 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
                         required=False
                     ),
                     LLMToolMetadataParameter(
+                        name="user_id",
+                        type="string",
+                        description="用户ID，用于区分不同用户，必需",
+                        required=True
+                    ),
+                    LLMToolMetadataParameter(
                         name="session_id",
                         type="string",
-                        description="会话ID，用于标识用户，通常可以自动获取",
+                        description="会话ID，用于标识会话，通常可以自动获取",
                         required=False
                     )
                 ]
@@ -194,6 +226,12 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
                         required=False
                     ),
                     LLMToolMetadataParameter(
+                        name="user_id",
+                        type="string",
+                        description="用户ID，用于区分不同用户，必需",
+                        required=True
+                    ),
+                    LLMToolMetadataParameter(
                         name="session_id",
                         type="string",
                         description="会话ID",
@@ -209,6 +247,12 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
                         name="schedule_id",
                         type="integer",
                         description="要取消的任务ID",
+                        required=True
+                    ),
+                    LLMToolMetadataParameter(
+                        name="user_id",
+                        type="string",
+                        description="用户ID，用于区分不同用户，必需",
                         required=True
                     ),
                     LLMToolMetadataParameter(
@@ -230,6 +274,12 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
                         required=True
                     ),
                     LLMToolMetadataParameter(
+                        name="user_id",
+                        type="string",
+                        description="用户ID，用于区分不同用户，必需",
+                        required=True
+                    ),
+                    LLMToolMetadataParameter(
                         name="session_id",
                         type="string",
                         description="会话ID",
@@ -242,16 +292,20 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
     async def run_tool(self, ten_env: AsyncTenEnv, name: str, args: dict):
         """执行工具调用"""
         try:
+            user_id = args.get("user_id")
+            if not user_id:
+                return "错误：缺少必需的参数 user_id"
+
             session_id = args.get("session_id", self.session_id)
 
             if name == "create_schedule":
-                result = await self._create_schedule(ten_env, args, session_id)
+                result = await self._create_schedule(ten_env, args, user_id, session_id)
             elif name == "list_schedules":
-                result = await self._list_schedules(ten_env, args, session_id)
+                result = await self._list_schedules(ten_env, args, user_id, session_id)
             elif name == "cancel_schedule":
-                result = await self._cancel_schedule(ten_env, args, session_id)
+                result = await self._cancel_schedule(ten_env, args, user_id, session_id)
             elif name == "complete_schedule":
-                result = await self._complete_schedule(ten_env, args, session_id)
+                result = await self._complete_schedule(ten_env, args, user_id, session_id)
             else:
                 result = f"未知工具: {name}"
 
@@ -265,7 +319,7 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
                 content=f"操作失败: {str(e)}"
             )
 
-    async def _create_schedule(self, ten_env: AsyncTenEnv, args: dict, session_id: str) -> str:
+    async def _create_schedule(self, ten_env: AsyncTenEnv, args: dict, user_id: str, session_id: str) -> str:
         """创建定时任务"""
         title = args["title"]
         scheduled_time_str = args["scheduled_time"]
@@ -299,9 +353,10 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO schedules
-            (session_id, title, description, schedule_type, scheduled_time, created_at, status, recurrence_rule, next_scheduled_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (user_id, session_id, title, description, schedule_type, scheduled_time, created_at, status, recurrence_rule, next_scheduled_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
+            user_id,
             session_id,
             title,
             description,
@@ -502,7 +557,7 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
 
         return recurrence_rule
 
-    async def _list_schedules(self, ten_env: AsyncTenEnv, args: dict, session_id: str) -> str:
+    async def _list_schedules(self, ten_env: AsyncTenEnv, args: dict, user_id: str, session_id: str) -> str:
         """列出任务"""
         status = args.get("status", "pending")
         schedule_type = args.get("schedule_type", "all")
@@ -510,8 +565,8 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        query = "SELECT id, title, description, schedule_type, scheduled_time, status, recurrence_rule, next_scheduled_time FROM schedules WHERE session_id = ?"
-        params = [session_id]
+        query = "SELECT id, title, description, schedule_type, scheduled_time, status, recurrence_rule, next_scheduled_time FROM schedules WHERE user_id = ?"
+        params = [user_id]
 
         if status != "all":
             query += " AND status = ?"
@@ -568,7 +623,7 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
 
         return "\n\n".join(result)
 
-    async def _cancel_schedule(self, ten_env: AsyncTenEnv, args: dict, session_id: str) -> str:
+    async def _cancel_schedule(self, ten_env: AsyncTenEnv, args: dict, user_id: str, session_id: str) -> str:
         """取消任务"""
         schedule_id = args["schedule_id"]
 
@@ -577,8 +632,8 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         cursor.execute('''
             UPDATE schedules
             SET status = 'cancelled'
-            WHERE id = ? AND session_id = ?
-        ''', (schedule_id, session_id))
+            WHERE id = ? AND user_id = ?
+        ''', (schedule_id, user_id))
 
         if cursor.rowcount == 0:
             conn.close()
@@ -589,7 +644,7 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
 
         return f"已取消任务 ID: {schedule_id}"
 
-    async def _complete_schedule(self, ten_env: AsyncTenEnv, args: dict, session_id: str) -> str:
+    async def _complete_schedule(self, ten_env: AsyncTenEnv, args: dict, user_id: str, session_id: str) -> str:
         """完成任务"""
         schedule_id = args["schedule_id"]
 
@@ -598,8 +653,8 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         cursor.execute('''
             UPDATE schedules
             SET status = 'completed'
-            WHERE id = ? AND session_id = ?
-        ''', (schedule_id, session_id))
+            WHERE id = ? AND user_id = ?
+        ''', (schedule_id, user_id))
 
         if cursor.rowcount == 0:
             conn.close()
@@ -632,7 +687,7 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         # 对于非重复任务：检查 scheduled_time
         # 对于重复任务：检查 next_scheduled_time
         cursor.execute('''
-            SELECT id, session_id, title, description, schedule_type, scheduled_time, recurrence_rule, next_scheduled_time
+            SELECT id, user_id, session_id, title, description, schedule_type, scheduled_time, recurrence_rule, next_scheduled_time
             FROM schedules
             WHERE status = 'pending'
             AND (
@@ -645,10 +700,10 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         rows = cursor.fetchall()
 
         for row in rows:
-            schedule_id, session_id, title, desc, s_type, s_time, recurrence_rule, next_scheduled_time = row
+            schedule_id, user_id, session_id, title, desc, s_type, s_time, recurrence_rule, next_scheduled_time = row
 
             # 发送提醒
-            await self._send_reminder(session_id, schedule_id, title, desc, s_type)
+            await self._send_reminder(user_id, session_id, schedule_id, title, desc, s_type)
 
             if recurrence_rule:
                 # 重复任务：计算下一个执行时间
@@ -680,7 +735,7 @@ class ScheduleToolExtension(AsyncLLMToolBaseExtension):
         conn.commit()
         conn.close()
 
-    async def _send_reminder(self, session_id: str, schedule_id: int, title: str, description: str, schedule_type: str):
+    async def _send_reminder(self, user_id: str, session_id: str, schedule_id: int, title: str, description: str, schedule_type: str):
         """发送提醒通知"""
         if not self.ten_env:
             return

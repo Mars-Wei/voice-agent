@@ -42,39 +42,6 @@ python3 test_core_logic.py
 
 ---
 
-## Memo Tool Python 测试
-
-### 测试文件
-- `test_core_logic.py` - 核心逻辑测试（不依赖框架）
-
-### 测试覆盖
-
-#### 1. 数据库操作 ✓
-- ✅ 插入备忘录
-- ✅ 精确查询（key = "车钥匙"）
-- ✅ 模糊查询（key LIKE "%钥匙%"）
-- ✅ 更新备忘录内容
-- ✅ 存在性检查（用于自动更新逻辑）
-- ✅ 自动更新已存在的备忘录
-- ✅ 列出所有备忘录
-- ✅ 按分类筛选
-- ✅ 删除备忘录
-- ✅ 会话隔离（不同 session_id 的数据独立）
-
-### 运行测试
-```bash
-cd memo_tool_python
-python3 test_core_logic.py
-```
-
-### 测试结果
-```
-✓ 所有数据库操作测试通过！
-✓ 所有测试通过！
-```
-
----
-
 ## 测试统计
 
 ### Schedule Tool
@@ -85,16 +52,7 @@ python3 test_core_logic.py
   - 重复任务计算（daily, weekly, monthly, weekdays, weekends, every_N_*）
   - 数据库 CRUD 操作
   - 重复任务状态管理
-
-### Memo Tool
-- **测试用例数**: 10+
-- **通过率**: 100%
-- **覆盖功能**:
-  - 备忘录 CRUD 操作
-  - 精确和模糊查询
-  - 自动更新逻辑
-  - 分类筛选
-  - 会话隔离
+  - 用户隔离（不同 user_id 的数据独立）
 
 ---
 
