@@ -46,6 +46,78 @@ install_python_requirements() {
   echo "Python dependencies installation completed!"
 }
 
+create_extension_symlinks() {
+  local app_dir=$1
+
+  echo "Creating extension symlinks..."
+
+  # Read manifest.json to get dependencies
+  if [[ ! -f "$app_dir/manifest.json" ]]; then
+    echo "Warning: manifest.json not found, skipping symlink creation"
+    return
+  fi
+
+  local ext_dir="$app_dir/ten_packages/extension"
+  mkdir -p "$ext_dir"
+
+  # Parse manifest.json to find local path dependencies
+  python3 << EOF
+import json
+import os
+from pathlib import Path
+
+app_dir = Path("$app_dir")
+manifest_path = app_dir / "manifest.json"
+
+if not manifest_path.exists():
+    print("Warning: manifest.json not found")
+    exit(0)
+
+with open(manifest_path) as f:
+    manifest = json.load(f)
+
+ext_dir = Path("$ext_dir")
+dependencies = manifest.get("dependencies", [])
+
+for dep in dependencies:
+    if "path" in dep:
+        # Calculate absolute path
+        dep_path = app_dir / dep["path"]
+        if not dep_path.exists():
+            continue
+
+        # Get extension name from manifest.json in the dependency path
+        dep_manifest_path = dep_path / "manifest.json"
+        if not dep_manifest_path.exists():
+            continue
+
+        with open(dep_manifest_path) as f:
+            dep_manifest = json.load(f)
+
+        ext_name = dep_manifest.get("name")
+        if not ext_name:
+            continue
+
+        # Create symlink
+        symlink_path = ext_dir / ext_name
+        if symlink_path.exists() or symlink_path.is_symlink():
+            if symlink_path.is_symlink():
+                symlink_path.unlink()
+            else:
+                print(f"Warning: {symlink_path} exists and is not a symlink, skipping")
+                continue
+
+        # Use relative path for symlink
+        try:
+            rel_path = os.path.relpath(dep_path, ext_dir)
+            symlink_path.symlink_to(rel_path)
+            print(f"Created symlink: {symlink_path} -> {rel_path}")
+        except Exception as e:
+            print(f"Failed to create symlink {symlink_path}: {e}")
+
+EOF
+}
+
 build_go_app() {
   local app_dir=$1
   cd $app_dir
@@ -72,6 +144,9 @@ main() {
     echo "Error: manifest.json file not found"
     exit 1
   fi
+
+  # Create extension symlinks first
+  create_extension_symlinks "$APP_HOME"
 
   build_go_app "$APP_HOME"
 
