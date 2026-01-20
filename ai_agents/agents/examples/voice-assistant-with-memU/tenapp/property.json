@@ -21,23 +21,21 @@
                 "publish_audio": true,
                 "publish_data": true,
                 "enable_agora_asr": false,
-                "agora_asr_vendor_name": "microsoft",
-                "agora_asr_language": "en-US",
-                "agora_asr_vendor_key": "${env:AZURE_STT_KEY|}",
-                "agora_asr_vendor_region": "${env:AZURE_STT_REGION|}",
-                "agora_asr_session_control_file_path": "session_control.conf"
+                "subscribe_video": true,
+                "subscribe_video_pix_fmt": 4
               }
             },
             {
               "type": "extension",
               "name": "stt",
-              "addon": "deepgram_asr_python",
+              "addon": "aliyun_asr_bigmodel_python",
               "extension_group": "stt",
               "property": {
                 "params": {
-                  "api_key": "${env:DEEPGRAM_API_KEY}",
-                  "language": "en-US",
-                  "model": "nova-3"
+                  "api_key": "${env:ALIYUN_ASR_BIGMODEL_API_KEY}",
+                  "language_hints": [
+                    "zh"
+                  ]
                 }
               }
             },
@@ -47,30 +45,25 @@
               "addon": "openai_llm2_python",
               "extension_group": "chatgpt",
               "property": {
-                "base_url": "https://api.openai.com/v1",
-                "api_key": "${env:OPENAI_API_KEY}",
-                "frequency_penalty": 0.9,
-                "model": "${env:OPENAI_MODEL}",
-                "max_tokens": 512,
-                "prompt": "",
+                "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "api_key": "${env:QWEN_API_KEY}",
                 "proxy_url": "${env:OPENAI_PROXY_URL|}",
-                "greeting": "TEN Agent connected. How can I help you today?",
-                "max_memory_length": 10
+                "model": "${env:QWEN_MODEL|qwen-max}"
               }
             },
             {
               "type": "extension",
               "name": "tts",
-              "addon": "elevenlabs_tts2_python",
+              "addon": "minimax_tts_websocket_python",
               "extension_group": "tts",
               "property": {
-                "dump": false,
-                "dump_path": "./",
                 "params": {
-                  "key": "${env:ELEVENLABS_TTS_KEY}",
-                  "model_id": "eleven_multilingual_v2",
-                  "voice_id": "pNInz6obpgDQGcFmaJgB",
-                  "output_format": "pcm_16000"
+                  "api_key": "${env:MINIMAX_TTS_API_KEY}",
+                  "model": "speech-02-turbo",
+                  "audio_setting": {
+                    "sample_rate": 16000
+                  },
+                  "group_id": "${env:MINIMAX_TTS_GROUP_ID}"
                 }
               }
             },
@@ -80,14 +73,12 @@
               "addon": "main_python",
               "extension_group": "control",
               "property": {
-                "greeting": "Hello, I am your AI assistant.",
-                "agent_id": "voice_assistant_agent",
-                "memu_base_url": "https://api.memu.so",
-                "memu_api_key": "${env:MEMU_API_KEY}",
+                "greeting": "Hello, I am your AI assistant. What can I do for you?",
+                "agent_id": "agent001",
+                "zep_api_key": "${env:ZEP_API_KEY}",
                 "agent_name": "voice_assistant_agent",
-                "self_hosting": true,
-                "user_name": "User",
-                "user_id": "user",
+                "user_name": "Tim Smith",
+                "user_id": "user001",
                 "enable_memorization": true
               }
             },
@@ -100,18 +91,27 @@
             },
             {
               "type": "extension",
-              "name": "weatherapi_tool_python",
-              "addon": "weatherapi_tool_python",
+              "name": "vision_tool_python",
+              "addon": "vision_analyze_tool_python",
               "extension_group": "default",
-              "property": {
-                "api_key": "${env:WEATHERAPI_API_KEY|}"
-              }
+              "property": {}
             },
             {
               "type": "extension",
               "name": "streamid_adapter",
               "addon": "streamid_adapter",
               "property": {}
+            },
+            {
+              "type": "extension",
+              "name": "vllm",
+              "addon": "openai_llm2_python",
+              "property": {
+                "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "api_key": "${env:QWEN_API_KEY}",
+                "proxy_url": "${env:OPENAI_PROXY_URL|}",
+                "model": "${env:QWEN_VL_MODEL|qwen-vl-max}"
+              }
             }
           ],
           "connections": [
@@ -135,7 +135,7 @@
                   ],
                   "source": [
                     {
-                      "extension": "weatherapi_tool_python"
+                      "extension": "vision_tool_python"
                     }
                   ]
                 }
@@ -180,6 +180,16 @@
                     }
                   ]
                 }
+              ],
+              "video_frame": [
+                {
+                  "name": "video_frame",
+                  "dest": [
+                    {
+                      "extension": "vision_tool_python"
+                    }
+                  ]
+                }
               ]
             },
             {
@@ -190,6 +200,19 @@
                   "dest": [
                     {
                       "extension": "stt"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "extension": "vision_tool_python",
+              "cmd": [
+                {
+                  "name": "chat_completion",
+                  "dest": [
+                    {
+                      "extension": "vllm"
                     }
                   ]
                 }
