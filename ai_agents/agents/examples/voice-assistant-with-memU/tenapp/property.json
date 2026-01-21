@@ -232,12 +232,29 @@
           ],
           "formatter": {
             "type": "plain",
-            "colored": true
+            "colored": false
           },
           "emitter": {
             "type": "console",
             "config": {
               "stream": "stdout"
+            }
+          }
+        },
+        {
+          "matchers": [
+            {
+              "level": "info"
+            }
+          ],
+          "formatter": {
+            "type": "plain",
+            "colored": false
+          },
+          "emitter": {
+            "type": "file",
+            "config": {
+              "path": "logs/app.log"
             }
           }
         }
