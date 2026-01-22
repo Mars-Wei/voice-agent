@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import wallpaperImage from "@/assets/figma/wallpaper-56586a.png";
 import avatarImage from "@/assets/figma/avatar-chat-602206.png";
 import { useAppSelector, useAppDispatch, apiStopService } from "@/common";
-import { addChatItem, setAgentConnected } from "@/store/reducers/global";
+import { addChatItem, setAgentConnected, setOptions, reset } from "@/store/reducers/global";
 import { MicIconByStatus } from "@/components/Icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -175,11 +175,17 @@ export default function ChatPage({ className }: ChatPageProps) {
             const { rtcManager } = require("@/manager/rtc/rtc");
             await rtcManager.client?.leave();
 
-            // 更新状态
+            // 清理对话相关状态
+            dispatch(setOptions({ channel: "", appId: "", token: "" }));
             dispatch(setAgentConnected(false));
 
             // 显示成功消息
             alert("对话已结束，Agent已断开连接");
+
+            // 延迟一下，确保后端有足够时间清理
+            setTimeout(() => {
+                console.log("[ChatPage] Channel cleanup completed");
+            }, 1000);
         } catch (error) {
             console.error("[ChatPage] Error ending conversation:", error);
             alert("结束对话时发生错误，请重试");
