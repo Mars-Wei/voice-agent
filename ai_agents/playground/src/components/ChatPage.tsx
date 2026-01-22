@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Send } from "lucide-react";
+import { Send, PhoneOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import wallpaperImage from "@/assets/figma/wallpaper-56586a.png";
 import avatarImage from "@/assets/figma/avatar-chat-602206.png";
@@ -155,6 +155,30 @@ export default function ChatPage({ className }: ChatPageProps) {
         setAudioMute(!audioMute);
     };
 
+    const handleEndConversation = () => {
+        if (typeof window === "undefined") return;
+
+        console.log("[ChatPage] Ending conversation");
+
+        // 这里可以添加结束对话的逻辑
+        // 例如：断开RTM连接、停止音频轨道等
+        try {
+            const { rtmManager } = require("@/manager/rtm");
+            const { rtcManager } = require("@/manager/rtc/rtc");
+
+            // 发送结束对话的消息
+            rtmManager.sendText("[对话已结束]");
+
+            // 可以添加其他清理逻辑
+            // 例如：rtmManager.disconnect();
+            // 例如：rtcManager.leave();
+
+            alert("对话已结束");
+        } catch (error) {
+            console.error("[ChatPage] Error ending conversation:", error);
+        }
+    };
+
     React.useEffect(() => {
         if (typeof window === "undefined") return;
 
@@ -290,8 +314,8 @@ export default function ChatPage({ className }: ChatPageProps) {
                             className="h-full w-full rounded-full object-contain"
                         />
                     </div>
-                    {/* Mute button below avatar */}
-                    <div className="mt-6 flex justify-center">
+                    {/* Mute and End buttons below avatar */}
+                    <div className="mt-6 flex justify-center gap-4">
                         <Button
                             variant="outline"
                             size="icon"
@@ -311,6 +335,20 @@ export default function ChatPage({ className }: ChatPageProps) {
                                 active={!audioMute}
                                 color={audioMute ? "#EF4444" : "#8B5CF6"}
                             />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleEndConversation}
+                            className={cn(
+                                "h-12 w-12 rounded-full border-2 transition-all duration-200",
+                                "border-purple-400 bg-purple-50 hover:bg-purple-100"
+                            )}
+                            style={{
+                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                            }}
+                        >
+                            <PhoneOff className="h-6 w-6" style={{ color: "#8B5CF6" }} />
                         </Button>
                     </div>
                     {/* Audio waveform below avatar */}
