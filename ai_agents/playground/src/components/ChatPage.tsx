@@ -5,7 +5,7 @@ import { Send, PhoneOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import wallpaperImage from "@/assets/figma/wallpaper-56586a.png";
 import avatarImage from "@/assets/figma/avatar-chat-602206.png";
-import { useAppSelector, useAppDispatch, apiStopService } from "@/common";
+import { useAppSelector, useAppDispatch, apiStopService, getRandomChannel } from "@/common";
 import { addChatItem, setAgentConnected, setOptions, reset } from "@/store/reducers/global";
 import { MicIconByStatus } from "@/components/Icon";
 import { Button } from "@/components/ui/button";
@@ -175,9 +175,14 @@ export default function ChatPage({ className }: ChatPageProps) {
             const { rtcManager } = require("@/manager/rtc/rtc");
             await rtcManager.client?.leave();
 
-            // 清理对话相关状态
-            dispatch(setOptions({ channel: "", appId: "", token: "" }));
-            dispatch(setAgentConnected(false));
+            // 清除localStorage中的options，强制AuthInitializer生成新的channel
+            if (typeof window !== "undefined") {
+                localStorage.removeItem("__options__");
+                console.log("[ChatPage] Cleared options from localStorage");
+            }
+
+            // 重置状态
+            dispatch(reset());
 
             // 显示成功消息
             alert("对话已结束，Agent已断开连接");
