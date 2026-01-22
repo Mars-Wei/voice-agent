@@ -278,7 +278,7 @@ export default function ChatPage({ className }: ChatPageProps) {
                 {/* Avatar - Left side, larger */}
                 <div className="relative flex-shrink-0 flex flex-col items-center px-12 pt-16">
                     <div
-                        className="relative h-[500px] w-[500px] rounded-full"
+                        className="relative h-[500px] w-[500px] rounded-full overflow-hidden"
                         style={{
                             background: "linear-gradient(180deg, #FFFFFF 0%, #D3BDD7 100%)",
                             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
@@ -287,7 +287,7 @@ export default function ChatPage({ className }: ChatPageProps) {
                         <img
                             src={avatarImage.src || avatarImage}
                             alt="Avatar"
-                            className="h-full w-full rounded-full object-cover"
+                            className="h-full w-full rounded-full object-contain"
                         />
                     </div>
                     {/* Mute button below avatar */}

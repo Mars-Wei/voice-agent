@@ -59,7 +59,7 @@ export default function WelcomePage({
                     {/* Avatar image */}
                     <div className="relative mb-8">
                         <div
-                            className="relative h-64 w-64 rounded-full"
+                            className="relative h-64 w-64 rounded-full overflow-hidden"
                             style={{
                                 background: "linear-gradient(180deg, #FFFFFF 0%, #D3BDD7 100%)",
                             }}
@@ -67,7 +67,7 @@ export default function WelcomePage({
                             <img
                                 src={avatarImage.src || avatarImage}
                                 alt="Avatar"
-                                className="h-full w-full rounded-full object-cover"
+                                className="h-full w-full rounded-full object-contain"
                             />
                         </div>
                     </div>
