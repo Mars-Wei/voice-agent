@@ -5,8 +5,8 @@ import { Send, PhoneOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import wallpaperImage from "@/assets/figma/wallpaper-56586a.png";
 import avatarImage from "@/assets/figma/avatar-chat-602206.png";
-import { useAppSelector, useAppDispatch } from "@/common";
-import { addChatItem } from "@/store/reducers/global";
+import { useAppSelector, useAppDispatch, apiStopService } from "@/common";
+import { addChatItem, setAgentConnected } from "@/store/reducers/global";
 import { MicIconByStatus } from "@/components/Icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -155,27 +155,34 @@ export default function ChatPage({ className }: ChatPageProps) {
         setAudioMute(!audioMute);
     };
 
-    const handleEndConversation = () => {
+    const handleEndConversation = async () => {
         if (typeof window === "undefined") return;
 
         console.log("[ChatPage] Ending conversation");
 
-        // 这里可以添加结束对话的逻辑
-        // 例如：断开RTM连接、停止音频轨道等
         try {
-            const { rtmManager } = require("@/manager/rtm");
-            const { rtcManager } = require("@/manager/rtc/rtc");
+            // 停止agent服务
+            if (options.channel) {
+                await apiStopService(options.channel);
+                console.log("[ChatPage] Agent stopped successfully");
+            }
 
             // 发送结束对话的消息
+            const { rtmManager } = require("@/manager/rtm");
             rtmManager.sendText("[对话已结束]");
 
-            // 可以添加其他清理逻辑
-            // 例如：rtmManager.disconnect();
-            // 例如：rtcManager.leave();
+            // 断开RTC连接
+            const { rtcManager } = require("@/manager/rtc/rtc");
+            await rtcManager.client?.leave();
 
-            alert("对话已结束");
+            // 更新状态
+            dispatch(setAgentConnected(false));
+
+            // 显示成功消息
+            alert("对话已结束，Agent已断开连接");
         } catch (error) {
             console.error("[ChatPage] Error ending conversation:", error);
+            alert("结束对话时发生错误，请重试");
         }
     };
 
