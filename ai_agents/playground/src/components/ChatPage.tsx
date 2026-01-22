@@ -7,6 +7,8 @@ import wallpaperImage from "@/assets/figma/wallpaper-56586a.png";
 import avatarImage from "@/assets/figma/avatar-chat-602206.png";
 import { useAppSelector, useAppDispatch } from "@/common";
 import { addChatItem } from "@/store/reducers/global";
+import { MicIconByStatus } from "@/components/Icon";
+import { Button } from "@/components/ui/button";
 import {
     EMessageDataType,
     EMessageType,
@@ -16,7 +18,6 @@ import {
 } from "@/types";
 import MessageList from "@/components/Chat/MessageList";
 import AudioWaveform from "@/components/Chat/AudioWaveform";
-import { Button } from "@/components/ui/button";
 import type { IMicrophoneAudioTrack } from "agora-rtc-sdk-ng";
 
 interface ChatPageProps {
@@ -27,6 +28,7 @@ export default function ChatPage({ className }: ChatPageProps) {
     const [inputValue, setInputValue] = React.useState("");
     const chatRef = React.useRef<HTMLDivElement>(null);
     const [audioTrack, setAudioTrack] = React.useState<IMicrophoneAudioTrack>();
+    const [audioMute, setAudioMute] = React.useState(false);
 
     const rtmConnected = useAppSelector((state) => state.global.rtmConnected);
     const dispatch = useAppDispatch();
@@ -99,10 +101,10 @@ export default function ChatPage({ className }: ChatPageProps) {
                 console.log("[ChatPage] Setting audio track");
                 const track = tracks.audioTrack;
 
-                // Ensure audio track is not muted
-                if (track.muted) {
-                    console.warn("[ChatPage] Audio track is muted, unmuting...");
-                    track.setMuted(false);
+                // Sync mute state from user preference
+                if (track.muted !== audioMute) {
+                    console.log("[ChatPage] Syncing mute state to audio track:", audioMute);
+                    track.setMuted(audioMute);
                 }
 
                 // Monitor track state
@@ -123,10 +125,10 @@ export default function ChatPage({ className }: ChatPageProps) {
             console.log("[ChatPage] Found initial audio track");
             const track = rtcManager.localTracks.audioTrack;
 
-            // Ensure audio track is not muted
-            if (track.muted) {
-                console.warn("[ChatPage] Initial audio track is muted, unmuting...");
-                track.setMuted(false);
+            // Sync mute state from user preference
+            if (track.muted !== audioMute) {
+                console.log("[ChatPage] Syncing initial mute state to audio track:", audioMute);
+                track.setMuted(audioMute);
             }
 
             setAudioTrack(track);
@@ -140,6 +142,18 @@ export default function ChatPage({ className }: ChatPageProps) {
             rtcManager.off("localTracksChanged", onLocalTracksChanged);
         };
     }, []);
+
+    // Sync mute state to audio track
+    React.useEffect(() => {
+        if (audioTrack) {
+            console.log("[ChatPage] Applying mute state to audio track:", audioMute);
+            audioTrack.setMuted(audioMute);
+        }
+    }, [audioTrack, audioMute]);
+
+    const handleMuteToggle = () => {
+        setAudioMute(!audioMute);
+    };
 
     React.useEffect(() => {
         if (typeof window === "undefined") return;
@@ -276,8 +290,31 @@ export default function ChatPage({ className }: ChatPageProps) {
                             className="h-full w-full rounded-full object-cover"
                         />
                     </div>
+                    {/* Mute button below avatar */}
+                    <div className="mt-6 flex justify-center">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleMuteToggle}
+                            className={cn(
+                                "h-12 w-12 rounded-full border-2 transition-all duration-200",
+                                audioMute
+                                    ? "border-red-400 bg-red-50 hover:bg-red-100"
+                                    : "border-purple-400 bg-purple-50 hover:bg-purple-100"
+                            )}
+                            style={{
+                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                            }}
+                        >
+                            <MicIconByStatus
+                                className="h-6 w-6"
+                                active={!audioMute}
+                                color={audioMute ? "#EF4444" : "#8B5CF6"}
+                            />
+                        </Button>
+                    </div>
                     {/* Audio waveform below avatar */}
-                    <div className="mt-8 w-full max-w-[600px]">
+                    <div className="mt-6 w-full max-w-[600px]">
                         <AudioWaveform audioTrack={audioTrack} />
                     </div>
                 </div>
