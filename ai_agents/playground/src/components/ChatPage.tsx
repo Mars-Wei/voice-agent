@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import wallpaperImage from "@/assets/figma/wallpaper-56586a.png";
 import avatarImage from "@/assets/figma/avatar-chat-602206.png";
 import { useAppSelector, useAppDispatch, apiStopService, getRandomChannel } from "@/common";
-import { addChatItem, setAgentConnected, setOptions, reset } from "@/store/reducers/global";
+import { addChatItem, setAgentConnected, setOptions, setRoomConnected, setRtmConnected } from "@/store/reducers/global";
 import { MicIconByStatus } from "@/components/Icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -181,15 +181,31 @@ export default function ChatPage({ className }: ChatPageProps) {
                 console.log("[ChatPage] Cleared options from localStorage");
             }
 
-            // 重置状态
-            dispatch(reset());
+            // 生成新的channel和userId，避免"channel existed"错误
+            const newChannel = getRandomChannel();
+            const newUserId = Math.floor(Math.random() * 1000000);
+            console.log("[ChatPage] Generated new channel and userId:", newChannel, newUserId);
+
+            // 更新options：使用新的channel和userId，清理appId和token
+            dispatch(setOptions({
+                channel: newChannel,
+                userId: newUserId,
+                userName: `用户_${newUserId}`,
+                appId: "",
+                token: ""
+            }));
+
+            // 重置连接状态
+            dispatch(setAgentConnected(false));
+            dispatch(setRoomConnected(false));
+            dispatch(setRtmConnected(false));
 
             // 显示成功消息
-            alert("对话已结束，Agent已断开连接");
+            alert(`对话已结束，Agent已断开连接。新的channel已准备就绪：${newChannel}`);
 
             // 延迟一下，确保后端有足够时间清理
             setTimeout(() => {
-                console.log("[ChatPage] Channel cleanup completed");
+                console.log("[ChatPage] Channel cleanup completed, new channel ready:", newChannel);
             }, 1000);
         } catch (error) {
             console.error("[ChatPage] Error ending conversation:", error);
