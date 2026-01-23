@@ -21,7 +21,7 @@ from .agent.events import (
 )
 from .helper import _send_cmd, _send_data, parse_sentences
 from .config import MainControlConfig  # assume extracted from your base model
-
+from .latency_tracker import LatencyTracker
 import uuid
 import traceback
 
@@ -51,6 +51,9 @@ class MainControlExtension(AsyncExtension):
         # Memory related attributes (using zep_client for Zep memory)
         self.zep_client: MemoryStore | None = None
 
+        # Latency tracking
+        self.latency_tracker: LatencyTracker | None = None
+
     def _current_metadata(self) -> dict:
         return {"session_id": self.session_id, "turn_id": self.turn_id}
 
@@ -66,6 +69,9 @@ class MainControlExtension(AsyncExtension):
             env=ten_env,
             api_key=self.config.zep_api_key,
         )
+
+        # Initialize latency tracker
+        self.latency_tracker = LatencyTracker(ten_env)
 
         self.agent = Agent(ten_env)
 
@@ -93,9 +99,7 @@ class MainControlExtension(AsyncExtension):
         self._rtc_user_count += 1
         if self._rtc_user_count == 1 and self.config and self.config.greeting:
             await self._send_to_tts(self.config.greeting, True)
-            await self._send_transcript(
-                "assistant", self.config.greeting, True, 100
-            )
+            await self._send_transcript("assistant", self.config.greeting, True, 100)
 
     @agent_event_handler(UserLeftEvent)
     async def _on_user_left(self, event: UserLeftEvent):
@@ -115,11 +119,33 @@ class MainControlExtension(AsyncExtension):
             await self._interrupt()
         if event.final:
             self.turn_id += 1
+
+            # [LATENCY] Mark ASR final - this is when user speech recognition completed
+            if self.latency_tracker:
+                self.latency_tracker.mark_asr_final(self.turn_id)
+
+            # Add user message to Zep thread first (like in the reference example)
+            # if self.zep_client and self.config.enable_memorization:
+            #     await self._add_user_message_to_zep(event.text)
+
+            # [LATENCY] Mark Zep memory retrieval start
+            if self.latency_tracker:
+                self.latency_tracker.mark_zep_start(self.turn_id)
+
             # Use user's query to search for related memories and pass to LLM
             zep_start = time.perf_counter()
             related_memory = await self._retrieve_related_memory0(event.text)
             zep_end = time.perf_counter()
             self.ten_env.log_info(f"[MainControlExtension] _retrieve_related_memory cost: {round((zep_end - zep_start) * 1000, 2)} ms")
+
+            # [LATENCY] Mark Zep memory retrieval end
+            if self.latency_tracker:
+                self.latency_tracker.mark_zep_end(self.turn_id)
+
+            # [LATENCY] Mark LLM call start
+            if self.latency_tracker:
+                self.latency_tracker.mark_llm_call_start(self.turn_id)
+
             if related_memory:
                 # Add related memory as context to LLM input
                 context_message = f"[Related Memory Context]\n{related_memory}\n\n[Current User Question]\n{event.text}"
@@ -131,13 +157,28 @@ class MainControlExtension(AsyncExtension):
     @agent_event_handler(LLMResponseEvent)
     async def _on_llm_response(self, event: LLMResponseEvent):
         if not event.is_final and event.type == "message":
+            # [LATENCY] Mark first LLM response token (will only record once per turn)
+            if self.latency_tracker:
+                self.latency_tracker.mark_llm_first_response(self.turn_id)
+
             sentences, self.sentence_fragment = parse_sentences(
                 self.sentence_fragment, event.delta
             )
             for s in sentences:
                 await self._send_to_tts(s, False)
 
+            # Early send: if sentence_fragment exceeds min_tts_chunk_size, send it to TTS
+            # This reduces latency for first TTS audio when LLM outputs long text without punctuation
+            min_chunk_size = getattr(self.config, 'min_tts_chunk_size', 5)
+            if self.sentence_fragment and len(self.sentence_fragment) >= min_chunk_size:
+                await self._send_to_tts(self.sentence_fragment, False)
+                self.sentence_fragment = ""
+
         if event.is_final and event.type == "message":
+            # [LATENCY] Mark LLM final response
+            if self.latency_tracker:
+                self.latency_tracker.mark_llm_final_response(self.turn_id)
+
             remaining_text = self.sentence_fragment or ""
             self.sentence_fragment = ""
             await self._send_to_tts(remaining_text, True)
@@ -225,6 +266,12 @@ class MainControlExtension(AsyncExtension):
         """
         Sends a sentence to the TTS system.
         """
+        # [LATENCY] Mark first TTS chunk sent (will only record once per turn)
+        # Note: This marks when text is sent to TTS, not when audio is returned
+        # True TTS audio latency would require tracking in the TTS extension
+        if self.latency_tracker and text:
+            self.latency_tracker.mark_tts_first_chunk(self.turn_id)
+
         request_id = f"tts-request-{self.turn_id}"
         await _send_data(
             self.ten_env,
