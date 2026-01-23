@@ -233,7 +233,7 @@ class ZepMemoryStore(MemoryStore):
             )
 
             edges: List[EntityEdge] = search_results.edges or []
-            facts = "\n".join([self.format_fact(edge) for edge in edges]) if edges else "  - No relevant facts found"
+            facts = "\n".join([self._format_fact(edge) for edge in edges]) if edges else "  - No relevant facts found"
             context_block = f"""\nRelevant facts about the user with validity date ranges:\n{facts}\n"""
 
             return context_block
