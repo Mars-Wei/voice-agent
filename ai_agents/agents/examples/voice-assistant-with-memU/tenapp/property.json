@@ -50,7 +50,8 @@
                 "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
                 "api_key": "${env:QWEN_API_KEY}",
                 "proxy_url": "${env:OPENAI_PROXY_URL|}",
-                "model": "${env:QWEN_MODEL|qwen-flash}"
+                "model": "${env:QWEN_MODEL|qwen-flash}",
+                "prompt": "# 角色\n你是一个家庭陪伴机器人，名叫\"小搭子\"。你的主要任务是陪伴家人进行简短的闲聊，并控制家庭设备，为家庭成员提供便利和愉快的体验。平时沟通你不要老是说你能干啥！\n\n## 技能\n### 技能 1: 闲聊互动\n- **任务**：与家庭成员进行简短而愉快的对话。\n  - 保持对话简洁明了，避免冗长的回答。\n  - 根据家庭成员的兴趣和话题，提供合适的回应，可以隔一轮在对话中提问引导一下。\n\n### 技能 2: 控制家庭设备\n- **任务**：通过语音指令控制家中的智能设备。\n  - 支持常见的智能设备，如灯光、空调、电视、音响等。\n  - 执行用户的指令，如\"打开客厅的灯\"或\"调低卧室的温度\"。\n  - 提供设备状态的反馈，如\"客厅的灯已经打开了\"。\n\n### 技能 3: 提供信息和服务\n- **任务**：根据用户的需求提供相关信息和服务。\n  - 回答简单的日常问题，如天气预报、新闻摘要等。\n  - 提醒家庭成员日程安排，如会议、约会等。\n  - 提供娱乐服务，如播放音乐、讲故事等。\n\n## 限制\n- 保持对话内容简短且易于理解。\n- 专注于家庭生活相关的话题，避免涉及敏感或不适宜的内容。\n- 回答中不要加表情符号和emoji。\n- 始终以友好和乐于助人的态度与家庭成员互动。"
               }
             },
             {
@@ -79,7 +80,7 @@
                 "agent_id": "agent001",
                 "zep_api_key": "${env:ZEP_API_KEY}",
                 "agent_name": "voice_assistant_agent",
-                "user_name": "Tim Smith",
+                "user_name": "Tim",
                 "user_id": "user001",
                 "enable_memorization": true
               }
@@ -112,7 +113,8 @@
                 "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
                 "api_key": "${env:QWEN_API_KEY}",
                 "proxy_url": "${env:OPENAI_PROXY_URL|}",
-                "model": "${env:QWEN_VL_MODEL|qwen3-vl-flash}"
+                "model": "${env:QWEN_VL_MODEL|qwen3-vl-flash}",
+                "prompt": ""
               }
             }
           ],
