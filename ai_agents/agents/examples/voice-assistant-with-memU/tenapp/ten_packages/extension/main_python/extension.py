@@ -23,6 +23,7 @@ from .helper import _send_cmd, _send_data, parse_sentences
 from .config import MainControlConfig  # assume extracted from your base model
 
 import uuid
+import traceback
 
 # Memory store abstraction
 from .memory import MemoryStore, ZepMemoryStore
@@ -245,7 +246,63 @@ class MainControlExtension(AsyncExtension):
 
     # === Memory related methods ===
 
+
     async def _retrieve_memory(self, user_id: str = None) -> str:
+        """Retrieve conversation memory from Zep"""
+        if not self.zep_client:
+            return ""
+
+        try:
+            user_id = self.config.user_id
+            agent_id = self.config.agent_id
+            resp = await self.zep_client.retrieve_user_context(
+                user_id=user_id, agent_id=agent_id
+            )
+            return resp
+        except Exception as e:
+            self.ten_env.log_error(
+                f"[MainControlExtension] Failed to retrieve memory: {e}"
+            )
+            return ""
+
+    async def _retrieve_related_memory(
+        self, query: str, user_id: str = None
+    ) -> str:
+        """Retrieve related memory based on user query using Zep semantic search"""
+        if not self.zep_client  or not isinstance(self.zep_client, ZepMemoryStore):
+            return ""
+
+        try:
+            user_id = self.config.user_id
+            agent_id = self.config.agent_id
+
+            self.ten_env.log_info(
+                f"[MainControlExtension] Searching related memory with query: '{query}'"
+            )
+
+
+            thread_id = self.zep_client._get_thread_id(user_id, agent_id)
+
+            # Ensure user and thread exist
+            await self.zep_client._ensure_user_and_thread(
+                user_id, self.config.user_name, thread_id
+            )
+
+
+            memory_text = await self.zep_client.retrieve_user_preferences_context(user_id, query)
+            self.ten_env.log_info(
+                f"[MainControlExtension] Retrieved related memory (length: {len(memory_text)})"
+            )
+            return memory_text
+        except Exception as e:
+            self.ten_env.log_error(
+                f"[MainControlExtension] Failed to retrieve related memory: {e}"
+            )
+            self.ten_env.log_error(traceback.format_exc())
+            return ""
+
+
+    async def _retrieve_memory0(self, user_id: str = None) -> str:
         """Retrieve conversation memory from Zep"""
         if not self.zep_client:
             return ""
@@ -264,7 +321,7 @@ class MainControlExtension(AsyncExtension):
             )
             return ""
 
-    async def _retrieve_related_memory(
+    async def _retrieve_related_memory0(
         self, query: str, user_id: str = None
     ) -> str:
         """Retrieve related memory based on user query using Zep semantic search"""

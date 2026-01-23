@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from ten_runtime import AsyncTenEnv
 from zep_cloud.client import AsyncZep
-from zep_cloud.types import Message
+from zep_cloud.types import Message, EntityEdge
 
 
 
@@ -23,6 +23,21 @@ class MemoryStore(ABC):
         agent_id: str,
         agent_name: str,
     ) -> None: ...
+
+    @abstractmethod
+    async def retrieve_user_context(
+        self, user_id: str, agent_id: str,
+    )->str: ...
+
+    @abstractmethod
+    async def retrieve_conversation_history_with_last_n(
+        self, user_id: str, agent_id: str, lastn: int
+    )->List[Dict[str, str]]: ...
+
+    @abstractmethod
+    async def retrieve_user_preferences_context(
+        self, user_id: str, user_message: str
+    )->str: ...
 
     @abstractmethod
     async def retrieve_default_categories(
@@ -87,6 +102,11 @@ class ZepMemoryStore(MemoryStore):
         Uses a deterministic approach: thread_{user_id}_{agent_id}
         """
         return f"thread_{user_id}_{agent_id}"
+
+    def _format_fact(self, edge: EntityEdge) -> str:
+            valid_at = edge.valid_at or "unknown"
+            invalid_at = edge.invalid_at or "present"
+            return f"  - {edge.fact} (Date range: {valid_at} - {invalid_at})"
 
     async def _ensure_user_and_thread(
         self, user_id: str, user_name: str, thread_id: str
@@ -171,6 +191,58 @@ class ZepMemoryStore(MemoryStore):
                 f"[ZepMemoryStore] Error memorizing conversation: {e}"
             )
             raise
+
+    async def retrieve_user_context(self, user_id: str, agent_id: str)-> str:
+        try:
+            thread_id = self._get_thread_id(user_id, agent_id)
+            context_response = await self.client.thread.get_user_context(
+                thread_id=thread_id,
+                mode="basic"
+            )
+            return context_response
+        except Exception as e:
+            self.env.log_error(
+                f"[ZepMemoryStore] Error retrieving user_context: {e}"
+            )
+            return ""
+
+    async def retrieve_conversation_history_with_last_n(self, user_id: str, agent_id: str, last_n=8)->List[Dict[str, str]]:
+        try:
+            thread_id = self._get_thread_id(user_id, agent_id)
+            thread_data = await self.client.thread.get(thread_id=thread_id, lastn=last_n)
+            messages = thread_data.messages or []
+            conversation_messages = [
+                {"role": msg.role, "content": msg.content}
+                for msg in messages if msg.role in ["user", "assistant"]
+            ]
+            return conversation_messages
+        except Exception as e:
+            self.env.log_error(
+                f"[ZepMemoryStore] Error retrieving conversation_history_with_last_n: {e}"
+            )
+            return []
+
+    async def retrieve_user_preferences_context(self, user_id: str, user_message: str)->str:
+        try:
+            # thread_id = self._get_thread_id(user_id, agent_id)
+            search_results = await self.client.graph.search(
+                user_id=user_id,
+                query=user_message,
+                scope="edges",
+                limit=4
+            )
+
+            edges: List[EntityEdge] = search_results.edges or []
+            facts = "\n".join([self.format_fact(edge) for edge in edges]) if edges else "  - No relevant facts found"
+            context_block = f"""\nRelevant facts about the user with validity date ranges:\n{facts}\n"""
+
+            return context_block
+        except Exception as e:
+            self.env.log_error(
+                f"[ZepMemoryStore] Error retrieving user_preferences_context: {e}"
+            )
+            return ""
+
 
     async def retrieve_default_categories(
         self, user_id: str, agent_id: str
