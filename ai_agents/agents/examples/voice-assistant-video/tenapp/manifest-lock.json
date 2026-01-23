@@ -770,19 +770,6 @@
       "path": "../../../ten_packages/extension/schedule_tool_python"
     },
     {
-      "type": "extension",
-      "name": "memo_tool_python",
-      "version": "0.1.0",
-      "hash": "93587a7330ad62d5b027d23485b9f65c296c5cc468f580b6f946e5a299a2166c",
-      "dependencies": [
-        {
-          "type": "system",
-          "name": "ten_runtime_python"
-        }
-      ],
-      "path": "../../../ten_packages/extension/memo_tool_python"
-    },
-    {
       "type": "system",
       "name": "ten_runtime_python",
       "version": "0.11.50",

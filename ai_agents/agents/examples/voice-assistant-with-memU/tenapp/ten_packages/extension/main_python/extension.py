@@ -310,7 +310,7 @@ class MainControlExtension(AsyncExtension):
                         "name": "related_context",
                         "summary": context_block,
                         "description": f"Context relevant to: {query}",
-                        "similarity_score": None,
+                        "similarity_score": 0,
                         "memory_count": 0,
                         "recent_memories": []
                     })
