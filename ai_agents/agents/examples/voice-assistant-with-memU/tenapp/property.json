@@ -36,7 +36,9 @@
                   "language_hints": [
                     "zh"
                   ]
-                }
+                },
+                "max_sentence_silence": 400,
+                "mute_pkg_duration_ms": 700
               }
             },
             {
@@ -79,7 +81,8 @@
                 "agent_name": "voice_assistant_agent",
                 "user_name": "Tim Smith",
                 "user_id": "user001",
-                "enable_memorization": true
+                "enable_memorization": true,
+                "min_tts_chunk_size": 10
               }
             },
             {

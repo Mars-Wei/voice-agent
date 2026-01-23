@@ -117,8 +117,8 @@ class MainControlExtension(AsyncExtension):
                 self.latency_tracker.mark_asr_final(self.turn_id)
 
             # Add user message to Zep thread first (like in the reference example)
-            if self.zep_client and self.config.enable_memorization:
-                await self._add_user_message_to_zep(event.text)
+            # if self.zep_client and self.config.enable_memorization:
+            #     await self._add_user_message_to_zep(event.text)
 
             # [LATENCY] Mark Zep memory retrieval start
             if self.latency_tracker:
@@ -155,6 +155,13 @@ class MainControlExtension(AsyncExtension):
             )
             for s in sentences:
                 await self._send_to_tts(s, False)
+            
+            # Early send: if sentence_fragment exceeds min_tts_chunk_size, send it to TTS
+            # This reduces latency for first TTS audio when LLM outputs long text without punctuation
+            min_chunk_size = getattr(self.config, 'min_tts_chunk_size', 5)
+            if self.sentence_fragment and len(self.sentence_fragment) >= min_chunk_size:
+                await self._send_to_tts(self.sentence_fragment, False)
+                self.sentence_fragment = ""
 
         if event.is_final and event.type == "message":
             # [LATENCY] Mark LLM final response
@@ -166,8 +173,8 @@ class MainControlExtension(AsyncExtension):
             await self._send_to_tts(remaining_text, True)
 
             # Add assistant response to Zep thread (like in the reference example)
-            if self.zep_client and self.config.enable_memorization:
-                await self._add_assistant_message_to_zep(event.text)
+            # if self.zep_client and self.config.enable_memorization:
+            #     await self._add_assistant_message_to_zep(event.text)
 
         await self._send_transcript(
             "assistant",
@@ -320,9 +327,9 @@ class MainControlExtension(AsyncExtension):
                 thread_id = self.zep_client._get_thread_id(user_id, agent_id)
 
                 # Ensure user and thread exist
-                await self.zep_client._ensure_user_and_thread(
-                    user_id, self.config.user_name, thread_id
-                )
+                # await self.zep_client._ensure_user_and_thread(
+                #     user_id, self.config.user_name, thread_id
+                # )
 
                 # Retrieve context from Zep (includes semantic search based on the query)
                 # This will use the already-added user message for context retrieval
