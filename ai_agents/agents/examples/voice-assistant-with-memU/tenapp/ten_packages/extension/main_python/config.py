@@ -11,4 +11,4 @@ class MainControlConfig(BaseModel):
     zep_api_key: str = ""  # Zep API key, can also be set via ZEP_API_KEY environment variable
     enable_memorization: bool = True
     # TTS streaming configuration
-    min_tts_chunk_size: int = 5  # Minimum characters to send to TTS before punctuation (default: 10)
+    min_tts_chunk_size: int = 8  # Minimum characters to send to TTS before punctuation (default: 10)

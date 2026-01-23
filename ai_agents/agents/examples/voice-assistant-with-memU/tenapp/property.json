@@ -75,7 +75,7 @@
               "addon": "main_python",
               "extension_group": "control",
               "property": {
-                "greeting": "Hello, I am your AI assistant. What can I do for you?",
+                "greeting": "你好，今天有什么想聊的吗?",
                 "agent_id": "agent001",
                 "zep_api_key": "${env:ZEP_API_KEY}",
                 "agent_name": "voice_assistant_agent",
