@@ -81,8 +81,7 @@
                 "agent_name": "voice_assistant_agent",
                 "user_name": "Tim Smith",
                 "user_id": "user001",
-                "enable_memorization": true,
-                "min_tts_chunk_size": 10
+                "enable_memorization": true
               }
             },
             {
