@@ -21,6 +21,7 @@ from .agent.events import (
 )
 from .helper import _send_cmd, _send_data, parse_sentences
 from .config import MainControlConfig  # assume extracted from your base model
+from .latency_tracker import LatencyTracker
 
 import uuid
 
@@ -50,6 +51,9 @@ class MainControlExtension(AsyncExtension):
         # Memory related attributes (using zep_client for Zep memory)
         self.zep_client: MemoryStore | None = None
 
+        # Latency tracking
+        self.latency_tracker: LatencyTracker | None = None
+
     def _current_metadata(self) -> dict:
         return {"session_id": self.session_id, "turn_id": self.turn_id}
 
@@ -65,6 +69,9 @@ class MainControlExtension(AsyncExtension):
             env=ten_env,
             api_key=self.config.zep_api_key,
         )
+
+        # Initialize latency tracker
+        self.latency_tracker = LatencyTracker(ten_env)
 
         self.agent = Agent(ten_env)
 
@@ -84,9 +91,7 @@ class MainControlExtension(AsyncExtension):
         self._rtc_user_count += 1
         if self._rtc_user_count == 1 and self.config and self.config.greeting:
             await self._send_to_tts(self.config.greeting, True)
-            await self._send_transcript(
-                "assistant", self.config.greeting, True, 100
-            )
+            await self._send_transcript("assistant", self.config.greeting, True, 100)
 
     @agent_event_handler(UserLeftEvent)
     async def _on_user_left(self, event: UserLeftEvent):
@@ -106,12 +111,30 @@ class MainControlExtension(AsyncExtension):
             await self._interrupt()
         if event.final:
             self.turn_id += 1
+
+            # [LATENCY] Mark ASR final - this is when user speech recognition completed
+            if self.latency_tracker:
+                self.latency_tracker.mark_asr_final(self.turn_id)
+
             # Add user message to Zep thread first (like in the reference example)
             if self.zep_client and self.config.enable_memorization:
                 await self._add_user_message_to_zep(event.text)
 
+            # [LATENCY] Mark Zep memory retrieval start
+            if self.latency_tracker:
+                self.latency_tracker.mark_zep_start(self.turn_id)
+
             # Use user's query to search for related memories and pass to LLM
             related_memory = await self._retrieve_related_memory(event.text)
+
+            # [LATENCY] Mark Zep memory retrieval end
+            if self.latency_tracker:
+                self.latency_tracker.mark_zep_end(self.turn_id)
+
+            # [LATENCY] Mark LLM call start
+            if self.latency_tracker:
+                self.latency_tracker.mark_llm_call_start(self.turn_id)
+
             if related_memory:
                 # Add related memory as context to LLM input
                 context_message = f"[Related Memory Context]\n{related_memory}\n\n[Current User Question]\n{event.text}"
@@ -123,6 +146,10 @@ class MainControlExtension(AsyncExtension):
     @agent_event_handler(LLMResponseEvent)
     async def _on_llm_response(self, event: LLMResponseEvent):
         if not event.is_final and event.type == "message":
+            # [LATENCY] Mark first LLM response token (will only record once per turn)
+            if self.latency_tracker:
+                self.latency_tracker.mark_llm_first_response(self.turn_id)
+
             sentences, self.sentence_fragment = parse_sentences(
                 self.sentence_fragment, event.delta
             )
@@ -130,6 +157,10 @@ class MainControlExtension(AsyncExtension):
                 await self._send_to_tts(s, False)
 
         if event.is_final and event.type == "message":
+            # [LATENCY] Mark LLM final response
+            if self.latency_tracker:
+                self.latency_tracker.mark_llm_final_response(self.turn_id)
+
             remaining_text = self.sentence_fragment or ""
             self.sentence_fragment = ""
             await self._send_to_tts(remaining_text, True)
@@ -215,6 +246,12 @@ class MainControlExtension(AsyncExtension):
         """
         Sends a sentence to the TTS system.
         """
+        # [LATENCY] Mark first TTS chunk sent (will only record once per turn)
+        # Note: This marks when text is sent to TTS, not when audio is returned
+        # True TTS audio latency would require tracking in the TTS extension
+        if self.latency_tracker and text:
+            self.latency_tracker.mark_tts_first_chunk(self.turn_id)
+
         request_id = f"tts-request-{self.turn_id}"
         await _send_data(
             self.ten_env,
@@ -264,9 +301,7 @@ class MainControlExtension(AsyncExtension):
             )
             return ""
 
-    async def _retrieve_related_memory(
-        self, query: str, user_id: str = None
-    ) -> str:
+    async def _retrieve_related_memory(self, query: str, user_id: str = None) -> str:
         """Retrieve related memory based on user query using Zep semantic search"""
         if not self.zep_client:
             return ""
@@ -292,28 +327,33 @@ class MainControlExtension(AsyncExtension):
                 # Retrieve context from Zep (includes semantic search based on the query)
                 # This will use the already-added user message for context retrieval
                 context_response = await self.zep_client.client.thread.get_user_context(
-                    thread_id=thread_id,
-                    mode="basic"
+                    thread_id=thread_id, mode="basic"
                 )
 
-                context_block = context_response.context if hasattr(context_response, "context") else ""
+                context_block = (
+                    context_response.context
+                    if hasattr(context_response, "context")
+                    else ""
+                )
 
                 # Format as related clustered categories structure
                 resp = {
                     "query": query,
                     "total_categories": 1 if context_block else 0,
-                    "categories": []
+                    "categories": [],
                 }
 
                 if context_block:
-                    resp["categories"].append({
-                        "name": "related_context",
-                        "summary": context_block,
-                        "description": f"Context relevant to: {query}",
-                        "similarity_score": 0,
-                        "memory_count": 0,
-                        "recent_memories": []
-                    })
+                    resp["categories"].append(
+                        {
+                            "name": "related_context",
+                            "summary": context_block,
+                            "description": f"Context relevant to: {query}",
+                            "similarity_score": 0,
+                            "memory_count": 0,
+                            "recent_memories": [],
+                        }
+                    )
             else:
                 # Fallback to original method
                 resp = await self.zep_client.retrieve_related_clustered_categories(
@@ -336,6 +376,7 @@ class MainControlExtension(AsyncExtension):
                 f"[MainControlExtension] Failed to retrieve related memory: {e}"
             )
             import traceback
+
             self.ten_env.log_error(traceback.format_exc())
             return ""
 
@@ -344,15 +385,9 @@ class MainControlExtension(AsyncExtension):
         summary = {
             "basic_stats": {
                 "total_categories": len(data.categories),
-                "total_memories": sum(
-                    cat.memory_count or 0 for cat in data.categories
-                ),
-                "user_id": (
-                    data.categories[0].user_id if data.categories else None
-                ),
-                "agent_id": (
-                    data.categories[0].agent_id if data.categories else None
-                ),
+                "total_memories": sum(cat.memory_count or 0 for cat in data.categories),
+                "user_id": (data.categories[0].user_id if data.categories else None),
+                "agent_id": (data.categories[0].agent_id if data.categories else None),
             },
             "categories": [],
         }
@@ -374,9 +409,7 @@ class MainControlExtension(AsyncExtension):
                 for memory in recent:
                     cat_summary["recent_memories"].append(
                         {
-                            "date": memory.happened_at.strftime(
-                                "%Y-%m-%d %H:%M"
-                            ),
+                            "date": memory.happened_at.strftime("%Y-%m-%d %H:%M"),
                             "content": memory.content,
                         }
                     )
@@ -419,13 +452,10 @@ class MainControlExtension(AsyncExtension):
 
             # Add user message to thread
             user_msg = ZepMessage(
-                name=self.config.user_name,
-                content=user_message,
-                role="user"
+                name=self.config.user_name, content=user_message, role="user"
             )
             await self.zep_client.client.thread.add_messages(
-                thread_id=thread_id,
-                messages=[user_msg]
+                thread_id=thread_id, messages=[user_msg]
             )
             self.ten_env.log_info(
                 f"[MainControlExtension] Added user message to Zep thread {thread_id}"
@@ -452,13 +482,10 @@ class MainControlExtension(AsyncExtension):
 
             # Add assistant message to thread
             assistant_msg = ZepMessage(
-                name=self.config.agent_name,
-                content=assistant_message,
-                role="assistant"
+                name=self.config.agent_name, content=assistant_message, role="assistant"
             )
             await self.zep_client.client.thread.add_messages(
-                thread_id=thread_id,
-                messages=[assistant_msg]
+                thread_id=thread_id, messages=[assistant_msg]
             )
             self.ten_env.log_info(
                 f"[MainControlExtension] Added assistant message to Zep thread {thread_id}"
@@ -486,8 +513,7 @@ class MainControlExtension(AsyncExtension):
                 await self.agent.llm_exec.write_context(
                     self.ten_env,
                     "assistant",
-                    "Memory summary of previous conversations:\n\n"
-                    + memory_summary,
+                    "Memory summary of previous conversations:\n\n" + memory_summary,
                 )
                 self.ten_env.log_info(
                     "[MainControlExtension] Memory summary written into LLM context"
