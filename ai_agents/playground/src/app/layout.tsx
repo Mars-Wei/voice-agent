@@ -8,7 +8,7 @@ import { StoreProvider } from "@/store";
 import "./global.css";
 
 export const metadata: Metadata = {
-  title: "TEN Agent | Real-Time Multimodal AI Agent",
+  title: "Agent",
   description:
     "TEN Agent is an open-source multimodal AI agent that can speak, see, and access a knowledge base(RAG).",
   appleWebApp: {

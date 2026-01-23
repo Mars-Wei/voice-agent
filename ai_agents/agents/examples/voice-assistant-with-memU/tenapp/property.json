@@ -114,7 +114,7 @@
                 "api_key": "${env:QWEN_API_KEY}",
                 "proxy_url": "${env:OPENAI_PROXY_URL|}",
                 "model": "${env:QWEN_VL_MODEL|qwen3-vl-flash}",
-                "prompt": ""
+                "prompt": "你用简洁明确的语言描述图画中的内容作为回答"
               }
             }
           ],
