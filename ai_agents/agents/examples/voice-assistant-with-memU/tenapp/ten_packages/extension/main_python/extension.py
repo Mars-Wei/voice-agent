@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from typing import Literal
+from typing import Literal, List
 
 from .agent.decorators import agent_event_handler
 from ten_runtime import (
@@ -22,8 +22,8 @@ from .agent.events import (
 from .helper import _send_cmd, _send_data, parse_sentences
 from .config import MainControlConfig  # assume extracted from your base model
 from .latency_tracker import LatencyTracker
-
 import uuid
+import traceback
 
 # Memory store abstraction
 from .memory import MemoryStore, ZepMemoryStore
@@ -75,6 +75,14 @@ class MainControlExtension(AsyncExtension):
 
         self.agent = Agent(ten_env)
 
+        user_id = self.config.user_id
+        agent_id = self.config.agent_id
+        self.thread_id = self.zep_client._get_thread_id(user_id, agent_id)
+
+        await self.zep_client._ensure_user_and_thread(
+            user_id, self.config.user_name, self.thread_id
+        )
+
         # Load memory summary and write into LLM context
         await self._load_memory_to_context()
 
@@ -125,7 +133,10 @@ class MainControlExtension(AsyncExtension):
                 self.latency_tracker.mark_zep_start(self.turn_id)
 
             # Use user's query to search for related memories and pass to LLM
-            related_memory = await self._retrieve_related_memory(event.text)
+            zep_start = time.perf_counter()
+            related_memory = await self._retrieve_related_memory0(event.text)
+            zep_end = time.perf_counter()
+            self.ten_env.log_info(f"[MainControlExtension] _retrieve_related_memory cost: {round((zep_end - zep_start) * 1000, 2)} ms")
 
             # [LATENCY] Mark Zep memory retrieval end
             if self.latency_tracker:
@@ -155,7 +166,7 @@ class MainControlExtension(AsyncExtension):
             )
             for s in sentences:
                 await self._send_to_tts(s, False)
-            
+
             # Early send: if sentence_fragment exceeds min_tts_chunk_size, send it to TTS
             # This reduces latency for first TTS audio when LLM outputs long text without punctuation
             min_chunk_size = getattr(self.config, 'min_tts_chunk_size', 5)
@@ -172,9 +183,11 @@ class MainControlExtension(AsyncExtension):
             self.sentence_fragment = ""
             await self._send_to_tts(remaining_text, True)
 
-            # Add assistant response to Zep thread (like in the reference example)
-            # if self.zep_client and self.config.enable_memorization:
-            #     await self._add_assistant_message_to_zep(event.text)
+            if self.turn_id % 2 == 0 and self.config.enable_memorization:
+                zep_start = time.perf_counter()
+                await self._memorize_conversation()
+                zep_end = time.perf_counter()
+                self.ten_env.log_info(f"[MainControlExtension] _add_message_to_zep cost: {round((zep_end - zep_start) * 1000, 2)} ms")
 
         await self._send_transcript(
             "assistant",
@@ -289,7 +302,110 @@ class MainControlExtension(AsyncExtension):
 
     # === Memory related methods ===
 
+
     async def _retrieve_memory(self, user_id: str = None) -> str:
+        """Retrieve conversation memory from Zep"""
+        if not self.zep_client:
+            return ""
+
+        try:
+            user_id = self.config.user_id
+            agent_id = self.config.agent_id
+            resp = await self.zep_client.retrieve_user_context(
+                user_id=user_id, agent_id=agent_id
+            )
+            return resp
+        except Exception as e:
+            self.ten_env.log_error(
+                f"[MainControlExtension] Failed to retrieve memory: {e}"
+            )
+            return ""
+
+    async def _retrieve_related_memory(
+        self, query: str, user_id: str = None
+    ) -> str:
+        """Retrieve related memory based on user query using Zep semantic search"""
+        if not self.zep_client  or not isinstance(self.zep_client, ZepMemoryStore):
+            return ""
+
+        try:
+            memory_text = await self.zep_client.retrieve_user_preferences_context(user_id, query)
+            self.ten_env.log_info(
+                f"[MainControlExtension] Retrieved related memory (length: {len(memory_text)})"
+            )
+            return memory_text
+        except Exception as e:
+            self.ten_env.log_error(
+                f"[MainControlExtension] Failed to retrieve related memory: {e}"
+            )
+            self.ten_env.log_error(traceback.format_exc())
+            return ""
+
+    # add conversation to zep
+    async def _memorize_conversation(self, user_id: str = None, user_name: str = None):
+        """Memorize the current conversation via configured store"""
+        if not self.zep_client:
+            return
+
+        try:
+            # Read context directly from llm_exec
+            llm_context = (
+                self.agent.llm_exec.get_context()
+                if self.agent and self.agent.llm_exec
+                else []
+            )
+            zep_messages = []
+            for m in llm_context:
+                role = getattr(m, "role", None)
+                content = getattr(m, "content", None)
+                if role in ["user", "assistant"] and isinstance(content, str):
+                    # self.ten_env.log_info(f"[MainControlExtension] _memorize_conversation_debug, role: {role}, content: {content}")
+                    if role=="user":
+                        content= await self._get_query(content)
+                        zep_messages.append(ZepMessage(
+                            name=self.config.user_name,
+                            content=content,
+                            role=role)
+                        )
+                    else:
+                        zep_messages.append(ZepMessage(
+                            name="AI Assistant",
+                            content=content,
+                            role=role)
+                        )
+                    self.ten_env.log_info(f"[MainControlExtension] _memorize_conversation_debug, role: {role}, content: {content}")
+
+            if not zep_messages:
+                return
+            asyncio.create_task(self._add_message_to_zep(messages=zep_messages))
+        except Exception as e:
+            self.ten_env.log_error(f"[MainControlExtension] Failed to memorize conversation: {e}")
+
+    async def _get_query(self, mem_content:str)->str:
+        separator = "[Current User Question]\n"
+        sep_index = mem_content.rfind(separator)
+        if sep_index == -1:
+            return ""
+
+        query_start = sep_index + len(separator)
+        query= mem_content[query_start:]
+        return query.strip()
+
+    async def _add_message_to_zep(self, messages: List[ZepMessage]):
+        """Add user message to Zep thread"""
+        if not self.zep_client or not isinstance(self.zep_client, ZepMemoryStore):
+            return
+
+        try:
+            await self.zep_client.client.thread.add_messages(
+                thread_id=self.thread_id,
+                messages=messages
+            )
+            self.ten_env.log_info(f"[MainControlExtension] Added message to Zep thread {self.thread_id}")
+        except Exception as e:
+            self.ten_env.log_error(f"[MainControlExtension] Failed to add message to Zep: {e}")
+
+    async def _retrieve_memory0(self, user_id: str = None) -> str:
         """Retrieve conversation memory from Zep"""
         if not self.zep_client:
             return ""
@@ -308,25 +424,27 @@ class MainControlExtension(AsyncExtension):
             )
             return ""
 
-    async def _retrieve_related_memory(self, query: str, user_id: str = None) -> str:
+    async def _retrieve_related_memory0(
+        self, query: str, user_id: str = None
+    ) -> str:
         """Retrieve related memory based on user query using Zep semantic search"""
         if not self.zep_client:
             return ""
 
         try:
-            user_id = self.config.user_id
-            agent_id = self.config.agent_id
+            # user_id = self.config.user_id
+            # agent_id = self.config.agent_id
 
-            self.ten_env.log_info(
-                f"[MainControlExtension] Searching related memory with query: '{query}'"
-            )
+            # self.ten_env.log_info(
+            #     f"[MainControlExtension] Searching related memory with query: '{query}'"
+            # )
 
             # Get thread_id for the user-agent pair and retrieve context
             # Note: User message should already be added in _on_asr_result
             if isinstance(self.zep_client, ZepMemoryStore):
-                thread_id = self.zep_client._get_thread_id(user_id, agent_id)
+                # thread_id = self.zep_client._get_thread_id(user_id, agent_id)
 
-                # Ensure user and thread exist
+                # # Ensure user and thread exist
                 # await self.zep_client._ensure_user_and_thread(
                 #     user_id, self.config.user_name, thread_id
                 # )
@@ -334,7 +452,8 @@ class MainControlExtension(AsyncExtension):
                 # Retrieve context from Zep (includes semantic search based on the query)
                 # This will use the already-added user message for context retrieval
                 context_response = await self.zep_client.client.thread.get_user_context(
-                    thread_id=thread_id, mode="basic"
+                    thread_id=self.thread_id,
+                    mode="basic"
                 )
 
                 context_block = (
@@ -364,7 +483,7 @@ class MainControlExtension(AsyncExtension):
             else:
                 # Fallback to original method
                 resp = await self.zep_client.retrieve_related_clustered_categories(
-                    user_id=user_id, agent_id=agent_id, category_query=query
+                    user_id=user_id, agent_id=self.config.agent_id, category_query=query
                 )
 
             # Parse response
