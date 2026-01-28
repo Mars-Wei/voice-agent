@@ -98,11 +98,14 @@ class ZepMemoryStore(MemoryStore):
     async def retrieve_user_context(self, user_id: str, agent_id: str)-> str:
         try:
             thread_id = self._get_thread_id(user_id, agent_id)
+            self.env.log_info(f"[ZepMemoryStore] thread_id: {thread_id}")
             context_response = await self.client.thread.get_user_context(
                 thread_id=thread_id,
                 mode="basic"
             )
-            return context_response
+
+            self.env.log_info(f"[ZepMemoryStore] retrieve_user_context, thread_id: {thread_id}, context_response: {context_response}")
+            return context_response.context
         except Exception as e:
             self.env.log_error(
                 f"[ZepMemoryStore] Error retrieving user_context: {e}"
@@ -128,6 +131,7 @@ class ZepMemoryStore(MemoryStore):
     async def retrieve_user_preferences_context(self, user_id: str, user_message: str)->str:
         try:
             # thread_id = self._get_thread_id(user_id, agent_id)
+            self.env.log_info(f"[ZepMemoryStore] user_id: {user_id}")
             search_results = await self.client.graph.search(
                 user_id=user_id,
                 query=user_message,
@@ -150,10 +154,11 @@ class ZepMemoryStore(MemoryStore):
         """Add user message to Zep thread"""
         try:
             thread_id = self._get_thread_id(user_id, agent_id)
+            self.env.log_info(f"[ZepMemoryStore] thread_id: {thread_id}")
             await self.client.thread.add_messages(
                 thread_id=thread_id,
                 messages=messages
             )
-            self.env.log_info(f"[MainControlExtension] Stored {len(messages)} message to Zep thread {thread_id}")
+            self.env.log_info(f"[ZepMemoryStore] Stored {len(messages)} message to Zep thread {thread_id}")
         except Exception as e:
-            self.env.log_error(f"[MainControlExtension] Failed to add message to Zep: {e}")
+            self.env.log_error(f"[ZepMemoryStore] Failed to add message to Zep: {e}")

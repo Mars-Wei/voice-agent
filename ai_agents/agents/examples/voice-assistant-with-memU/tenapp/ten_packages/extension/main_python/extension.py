@@ -100,7 +100,8 @@ class MainControlExtension(AsyncExtension):
             await self._interrupt()
         if event.final:
             self.turn_id += 1
-            related_memory = await self._retrieve_related_memory(event.text)
+            related_memory = await self._retrieve_related_memory(query=event.text, user_id=self.config.user_id)
+            self.ten_env.log_info(f"[_on_asr_result_memory] related_memory: \n{related_memory}\n\n")
             if related_memory:
                 context_message = f"[Related Memory Context]\n{related_memory}\n\n[Current User Question]\n{event.text}"
                 await self.agent.queue_llm_input(context_message)
@@ -310,9 +311,11 @@ class MainControlExtension(AsyncExtension):
                 role = getattr(m, "role", None)
                 content = getattr(m, "content", None)
                 if role in ["user", "assistant"] and isinstance(content, str):
-                    # self.ten_env.log_info(f"[MainControlExtension] _memorize_conversation_debug, role: {role}, content: {content}")
+                    self.ten_env.log_info(f"[MainControlExtension] _memorize_conversation_debug, role: {role}, content: {content}")
                     if role=="user":
-                        content= await self._get_query(content)
+                        query= await self._get_query(content)
+                        if query:
+                            content=query
                         zep_messages.append(ZepMessage(
                             name=self.config.user_name,
                             content=content,
@@ -328,7 +331,7 @@ class MainControlExtension(AsyncExtension):
 
             if not zep_messages:
                 return
-
+            self.ten_env.log_info(f"[MainControlExtension] _memorize_conversation_debug, zep_messages: {zep_messages}")
             asyncio.create_task(self.zep_client.add_message_to_zep(self.config.user_id, self.config.agent_id, messages=zep_messages))
         except Exception as e:
             self.ten_env.log_error(f"[MainControlExtension] Failed to memorize conversation: {e}")
