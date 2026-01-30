@@ -112,6 +112,17 @@
                 "proxy_url": "${env:OPENAI_PROXY_URL|}",
                 "model": "${env:QWEN_VL_MODEL|qwen-vl-max}"
               }
+            },
+            {
+              "type": "extension",
+              "name": "mem_retrieve_tool",
+              "addon": "mem_retrieve_tool_python",
+              "extension_group": "default",
+              "property": {
+                "zep_api_key": "${env:ZEP_API_KEY}",
+                "user_id": "${env:USER_ID|user001}",
+                "agent_id": "${env:AGENT_ID|agent001}"
+              }
             }
           ],
           "connections": [
@@ -136,6 +147,9 @@
                   "source": [
                     {
                       "extension": "vision_tool_python"
+                    },
+                    {
+                      "extension": "mem_retrieve_tool"
                     }
                   ]
                 }

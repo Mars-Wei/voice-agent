@@ -1,0 +1,5 @@
+{
+  "zep_api_key": "${env:ZEP_API_KEY|}",
+  "user_id": "${env:USER_ID|}",
+  "agent_id": "${env:AGENT_ID|}"
+}

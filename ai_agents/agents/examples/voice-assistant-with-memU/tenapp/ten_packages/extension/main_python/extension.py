@@ -65,7 +65,7 @@ class MainControlExtension(AsyncExtension):
         self.agent = Agent(ten_env)
 
         # Load memory summary and write into LLM context
-        await self._load_memory_to_context()
+        # await self._load_memory_to_context()
 
         # Now auto-register decorated methods
         for attr_name in dir(self):
@@ -100,13 +100,15 @@ class MainControlExtension(AsyncExtension):
             await self._interrupt()
         if event.final:
             self.turn_id += 1
-            related_memory = await self._retrieve_related_memory(query=event.text, user_id=self.config.user_id)
-            self.ten_env.log_info(f"[_on_asr_result_memory] related_memory: \n{related_memory}\n\n")
-            if related_memory:
-                context_message = f"[Related Memory Context]\n{related_memory}\n\n[Current User Question]\n{event.text}"
-                await self.agent.queue_llm_input(context_message)
-            else:
-                await self.agent.queue_llm_input(event.text)
+            # related_memory = await self._retrieve_related_memory(query=event.text, user_id=self.config.user_id)
+            # self.ten_env.log_info(f"[_on_asr_result_memory] related_memory: \n{related_memory}\n\n")
+            # if related_memory:
+            #     context_message = f"[Related Memory Context]\n{related_memory}\n\n[Current User Question]\n{event.text}"
+            #     await self.agent.queue_llm_input(context_message)
+            # else:
+            #     await self.agent.queue_llm_input(event.text)
+
+            await self.agent.queue_llm_input(event.text)
 
         await self._send_transcript("user", event.text, event.final, stream_id)
 
@@ -119,13 +121,6 @@ class MainControlExtension(AsyncExtension):
             for s in sentences:
                 await self._send_to_tts(s, False)
 
-            # Early send: if sentence_fragment exceeds min_tts_chunk_size, send it to TTS
-            # This reduces latency for first TTS audio when LLM outputs long text without punctuation
-            min_chunk_size = getattr(self.config, 'min_tts_chunk_size', 5)
-            if self.sentence_fragment and len(self.sentence_fragment) >= min_chunk_size:
-                await self._send_to_tts(self.sentence_fragment, False)
-                self.sentence_fragment = ""
-
         if event.is_final and event.type == "message":
             remaining_text = self.sentence_fragment or ""
             self.sentence_fragment = ""
@@ -133,7 +128,7 @@ class MainControlExtension(AsyncExtension):
 
             if self.turn_id % 2 == 0 and self.config.enable_memorization:
                 zep_start = time.perf_counter()
-                await self._memorize_conversation()
+                # await self._memorize_conversation()
                 zep_end = time.perf_counter()
                 self.ten_env.log_info(f"[MainControlExtension] _add_message_to_zep cost: {round((zep_end - zep_start) * 1000, 2)} ms")
 
@@ -154,9 +149,11 @@ class MainControlExtension(AsyncExtension):
         await self.agent.stop()
 
     async def on_cmd(self, ten_env: AsyncTenEnv, cmd: Cmd):
+        ten_env.log_info(f"[MainControlExtension] on_cmd: {cmd.get_name()}")
         await self.agent.on_cmd(cmd)
 
     async def on_data(self, ten_env: AsyncTenEnv, data: Data):
+        ten_env.log_info(f"[MainControlExtension] on_data: {data.get_name()}, {data}")
         await self.agent.on_data(data)
 
     # === helpers ===
