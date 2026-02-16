@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- 应用名称 -->
+    <string name="app_name">Voice Agent</string>
+
+    <!-- 默认服务器地址 -->
+    <string name="server_url">http://localhost:8080</string>
+
+    <!-- 权限说明 -->
+    <string name="permission_microphone_title">Microphone Permission Required</string>
+    <string name="permission_microphone_message">Voice Agent needs microphone access to enable voice chat functionality.</string>
+
+    <!-- 按钮文本 -->
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="send">Send</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+
+    <!-- 状态文本 -->
+    <string name="connecting">Connecting...</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="listening">Listening...</string>
+    <string name="processing">Processing...</string>
+
+    <!-- 占位符 -->
+    <string name="channel_name_hint">Channel Name</string>
+    <string name="user_id_hint">User ID</string>
+    <string name="message_hint">Type a message...</string>
+
+    <!-- 错误消息 -->
+    <string name="error_connection_failed">Connection failed. Please try again.</string>
+    <string name="error_agent_start_failed">Failed to start agent service.</string>
+    <string name="error_agora_token_failed">Failed to get Agora token.</string>
+    <string name="error_microphone_permission">Microphone permission is required for voice chat.</string>
+</resources>

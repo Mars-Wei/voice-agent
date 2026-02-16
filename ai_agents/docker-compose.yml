@@ -8,8 +8,8 @@ services:
     restart: always
     ports:
       - "${GRAPH_DESIGNER_SERVER_PORT}:${GRAPH_DESIGNER_SERVER_PORT}"
-      - "3000:3000"
-      - 8000-8888:8000-8888
+      - "3008:3008"
+      - 8000-8666:8000-8666
     volumes:
       - ./:/app
       - ${LOG_PATH}:${LOG_PATH}

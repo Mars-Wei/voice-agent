@@ -639,7 +639,7 @@ class MainControlExtension(AsyncExtension):
                 await self.agent.llm_exec.write_context(
                     self.ten_env,
                     "assistant",
-                    "Memory summary of previous conversations:\n\n" + memory_summary,
+                    "Memory summary of previous conversations:\n\n" + str(memory_summary),
                 )
                 self.ten_env.log_info(
                     "[MainControlExtension] Memory summary written into LLM context"

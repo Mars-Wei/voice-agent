@@ -58,7 +58,7 @@
               "type": "extension",
               "name": "tts",
               "addon": "minimax_tts_websocket_python",
-              "extension_group": "tts",
+              "extension_group": "default",
               "property": {
                 "params": {
                   "api_key": "${env:MINIMAX_TTS_API_KEY}",
@@ -103,6 +103,7 @@
               "type": "extension",
               "name": "streamid_adapter",
               "addon": "streamid_adapter",
+              "extension_group": "default",
               "property": {}
             },
             {
@@ -179,6 +180,14 @@
                 {
                   "name": "data",
                   "source": [
+                    {
+                      "extension": "message_collector"
+                    }
+                  ]
+                },
+                {
+                  "name": "data",
+                  "dest": [
                     {
                       "extension": "message_collector"
                     }

@@ -1,0 +1,185 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.ten.voiceagent"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <!-- 网络权限 -->
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:6:5-67
+12-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:6:22-64
+13    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+13-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:7:5-79
+13-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:7:22-76
+14
+15    <!-- 麦克风权限 (用于 WebRTC/Agora) -->
+16    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+16-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:10:5-71
+16-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:10:22-68
+17    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+17-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:11:5-80
+17-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:11:22-77
+18
+19    <!-- 摄像头权限 (可选) -->
+20    <uses-permission android:name="android.permission.CAMERA" />
+20-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:14:5-65
+20-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:14:22-62
+21
+22    <!-- 蓝牙权限 (用于音频路由) -->
+23    <uses-permission
+23-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:17:5-95
+24        android:name="android.permission.BLUETOOTH"
+24-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:17:22-65
+25        android:maxSdkVersion="30" />
+25-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:17:66-92
+26    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+26-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:18:5-76
+26-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:18:22-73
+27
+28    <permission
+28-->[androidx.core:core:1.12.0] /Users/mars/.gradle/caches/transforms-3/911b074fc794e41960195c5c2aa39344/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
+29        android:name="com.ten.voiceagent.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+29-->[androidx.core:core:1.12.0] /Users/mars/.gradle/caches/transforms-3/911b074fc794e41960195c5c2aa39344/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
+30        android:protectionLevel="signature" />
+30-->[androidx.core:core:1.12.0] /Users/mars/.gradle/caches/transforms-3/911b074fc794e41960195c5c2aa39344/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
+31
+32    <uses-permission android:name="com.ten.voiceagent.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+32-->[androidx.core:core:1.12.0] /Users/mars/.gradle/caches/transforms-3/911b074fc794e41960195c5c2aa39344/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
+32-->[androidx.core:core:1.12.0] /Users/mars/.gradle/caches/transforms-3/911b074fc794e41960195c5c2aa39344/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+33
+34    <application
+34-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:20:5-45:19
+35        android:name="com.ten.voiceagent.VoiceAgentApp"
+35-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:21:9-38
+36        android:allowBackup="true"
+36-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:22:9-35
+37        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+37-->[androidx.core:core:1.12.0] /Users/mars/.gradle/caches/transforms-3/911b074fc794e41960195c5c2aa39344/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
+38        android:dataExtractionRules="@xml/data_extraction_rules"
+38-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:23:9-65
+39        android:debuggable="true"
+40        android:extractNativeLibs="false"
+41        android:fullBackupContent="@xml/backup_rules"
+41-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:24:9-54
+42        android:icon="@mipmap/ic_launcher"
+42-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:25:9-43
+43        android:label="@string/app_name"
+43-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:26:9-41
+44        android:networkSecurityConfig="@xml/network_security_config"
+44-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:31:9-69
+45        android:roundIcon="@mipmap/ic_launcher_round"
+45-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:27:9-54
+46        android:supportsRtl="true"
+46-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:28:9-35
+47        android:theme="@style/Theme.VoiceAgent"
+47-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:29:9-48
+48        android:usesCleartextTraffic="true" >
+48-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:30:9-44
+49        <activity
+49-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:34:9-44:20
+50            android:name="com.ten.voiceagent.presentation.MainActivity"
+50-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:35:13-54
+51            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+51-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:37:13-87
+52            android:exported="true"
+52-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:36:13-36
+53            android:launchMode="singleTask"
+53-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:38:13-44
+54            android:theme="@style/Theme.VoiceAgent" >
+54-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:39:13-52
+55            <intent-filter>
+55-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:40:13-43:29
+56                <action android:name="android.intent.action.MAIN" />
+56-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:41:17-69
+56-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:41:25-66
+57
+58                <category android:name="android.intent.category.LAUNCHER" />
+58-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:42:17-77
+58-->/Users/mars/code/voice-agent/android-app/app/src/main/AndroidManifest.xml:42:27-74
+59            </intent-filter>
+60        </activity>
+61        <activity
+61-->[androidx.compose.ui:ui-tooling-android:1.6.1] /Users/mars/.gradle/caches/transforms-3/4e5632179070c4332f4bd481a8d9d687/transformed/jetified-ui-tooling-release/AndroidManifest.xml:23:9-25:39
+62            android:name="androidx.compose.ui.tooling.PreviewActivity"
+62-->[androidx.compose.ui:ui-tooling-android:1.6.1] /Users/mars/.gradle/caches/transforms-3/4e5632179070c4332f4bd481a8d9d687/transformed/jetified-ui-tooling-release/AndroidManifest.xml:24:13-71
+63            android:exported="true" />
+63-->[androidx.compose.ui:ui-tooling-android:1.6.1] /Users/mars/.gradle/caches/transforms-3/4e5632179070c4332f4bd481a8d9d687/transformed/jetified-ui-tooling-release/AndroidManifest.xml:25:13-36
+64        <activity
+64-->[androidx.compose.ui:ui-test-manifest:1.6.1] /Users/mars/.gradle/caches/transforms-3/29b2d0812781927b4d824235c274473d/transformed/jetified-ui-test-manifest-1.6.1/AndroidManifest.xml:23:9-25:39
+65            android:name="androidx.activity.ComponentActivity"
+65-->[androidx.compose.ui:ui-test-manifest:1.6.1] /Users/mars/.gradle/caches/transforms-3/29b2d0812781927b4d824235c274473d/transformed/jetified-ui-test-manifest-1.6.1/AndroidManifest.xml:24:13-63
+66            android:exported="true" />
+66-->[androidx.compose.ui:ui-test-manifest:1.6.1] /Users/mars/.gradle/caches/transforms-3/29b2d0812781927b4d824235c274473d/transformed/jetified-ui-test-manifest-1.6.1/AndroidManifest.xml:25:13-36
+67
+68        <provider
+68-->[androidx.emoji2:emoji2:1.3.0] /Users/mars/.gradle/caches/transforms-3/3022c4a166be329765e088de38b76b83/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+69            android:name="androidx.startup.InitializationProvider"
+69-->[androidx.emoji2:emoji2:1.3.0] /Users/mars/.gradle/caches/transforms-3/3022c4a166be329765e088de38b76b83/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:25:13-67
+70            android:authorities="com.ten.voiceagent.androidx-startup"
+70-->[androidx.emoji2:emoji2:1.3.0] /Users/mars/.gradle/caches/transforms-3/3022c4a166be329765e088de38b76b83/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:26:13-68
+71            android:exported="false" >
+71-->[androidx.emoji2:emoji2:1.3.0] /Users/mars/.gradle/caches/transforms-3/3022c4a166be329765e088de38b76b83/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:27:13-37
+72            <meta-data
+72-->[androidx.emoji2:emoji2:1.3.0] /Users/mars/.gradle/caches/transforms-3/3022c4a166be329765e088de38b76b83/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+73                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+73-->[androidx.emoji2:emoji2:1.3.0] /Users/mars/.gradle/caches/transforms-3/3022c4a166be329765e088de38b76b83/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:30:17-75
+74                android:value="androidx.startup" />
+74-->[androidx.emoji2:emoji2:1.3.0] /Users/mars/.gradle/caches/transforms-3/3022c4a166be329765e088de38b76b83/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:31:17-49
+75            <meta-data
+75-->[androidx.lifecycle:lifecycle-process:2.7.0] /Users/mars/.gradle/caches/transforms-3/bbcd0911b150d616c1646c9c3bd9509b/transformed/jetified-lifecycle-process-2.7.0/AndroidManifest.xml:29:13-31:52
+76                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+76-->[androidx.lifecycle:lifecycle-process:2.7.0] /Users/mars/.gradle/caches/transforms-3/bbcd0911b150d616c1646c9c3bd9509b/transformed/jetified-lifecycle-process-2.7.0/AndroidManifest.xml:30:17-78
+77                android:value="androidx.startup" />
+77-->[androidx.lifecycle:lifecycle-process:2.7.0] /Users/mars/.gradle/caches/transforms-3/bbcd0911b150d616c1646c9c3bd9509b/transformed/jetified-lifecycle-process-2.7.0/AndroidManifest.xml:31:17-49
+78            <meta-data
+78-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
+79                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+79-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
+80                android:value="androidx.startup" />
+80-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
+81        </provider>
+82
+83        <receiver
+83-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
+84            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+84-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
+85            android:directBootAware="false"
+85-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
+86            android:enabled="true"
+86-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
+87            android:exported="true"
+87-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
+88            android:permission="android.permission.DUMP" >
+88-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
+89            <intent-filter>
+89-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
+90                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+90-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
+90-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
+91            </intent-filter>
+92            <intent-filter>
+92-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
+93                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+93-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
+93-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
+94            </intent-filter>
+95            <intent-filter>
+95-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
+96                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+96-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
+96-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
+97            </intent-filter>
+98            <intent-filter>
+98-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
+99                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/mars/.gradle/caches/transforms-3/6ae679b5017be46fea746b885ba077d4/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
+100            </intent-filter>
+101        </receiver>
+102    </application>
+103
+104</manifest>

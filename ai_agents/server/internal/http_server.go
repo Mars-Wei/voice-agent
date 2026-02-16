@@ -678,7 +678,20 @@ func (s *HttpServer) processProperty(req *StartReq, tenappDir string) (propertyJ
 	// Set start parameters to property.json
 	for key, props := range startPropMap {
 		val := getFieldValue(req, key)
-		if val != "" {
+		slog.Info("Processing start parameter", "key", key, "val", val, "requestId", req.RequestId, logTag)
+		// Check if val is not nil and not zero value (for uint types, 0 means not set)
+		if val != nil {
+			// For numeric types, also check if value is not 0
+			switch v := val.(type) {
+			case uint32, uint64:
+				if v == 0 {
+					continue
+				}
+			case string:
+				if v == "" {
+					continue
+				}
+			}
 			for _, prop := range props {
 				// Convert value type if specified
 				var finalVal interface{} = val
@@ -696,6 +709,7 @@ func (s *HttpServer) processProperty(req *StartReq, tenappDir string) (propertyJ
 						if nodeMap["name"] == prop.ExtensionName {
 							properties := nodeMap["property"].(map[string]interface{})
 							properties[prop.Property] = finalVal
+							slog.Info("Injected property", "extension", prop.ExtensionName, "property", prop.Property, "value", finalVal, "requestId", req.RequestId, logTag)
 						}
 					}
 				}
