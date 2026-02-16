@@ -1,0 +1,9 @@
+{
+    "greeting": "Hello! I'm your AI assistant with memory. I can remember our previous conversations to provide more personalized help.",
+    "agent_id": "agent001",
+    "agent_name": "Voice Assistant with Memory",
+    "user_id": "user001",
+    "user_name": "Tim Smith",
+    "zep_api_key": "",
+    "enable_memorization": true
+}

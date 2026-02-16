@@ -1,0 +1,5 @@
+# Memory integration (Zep)
+zep-cloud>=3.0.0
+
+# Optional: for better error handling
+pydantic

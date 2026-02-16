@@ -1,0 +1,68 @@
+#
+# Copyright © 2025 Agora
+# This file is part of TEN Framework, an open source project.
+# Licensed under the Apache License, Version 2.0, with certain conditions.
+# Refer to the "LICENSE" file in the root directory for more information.
+#
+import("//build/options.gni")
+import("//build/ten_runtime/ten.gni")
+
+ten_shared_library("ten_runtime_go") {
+  if (is_mac || is_linux) {
+    add_configs = [ "//.gnfiles/build/toolchain/common:allow_undefined" ]
+    remove_configs = [ "//.gnfiles/build/toolchain/common:disallow_undefined" ]
+  }
+
+  include_dirs = ten_runtime_common_includes
+  include_dirs += [
+    "//src",
+    "${root_out_dir}/obj",
+    "${root_gen_dir}/cmake/yyjson/include",
+  ]
+
+  cflags = []
+
+  # -fPIC are ignored because they are unused for Windows
+  # Ref: https://stackoverflow.com/questions/5674613/compiling-a-dynamically-linked-library
+  #      https://stackoverflow.com/questions/4787069/autoconf-set-fpic-only-when-necessary
+  if (!is_win) {
+    cflags += [ "-fPIC" ]
+  }
+
+  if (!defined(ldflags)) {
+    ldflags = []
+  }
+
+  # Add rpath to find ten_runtime library.
+  if (is_mac) {
+    ldflags += [ "-Wl,-rpath,@loader_path/../../ten_runtime/lib" ]
+  } else if (is_linux || is_mingw) {
+    # MinGW also uses GNU ld and supports rpath
+    ldflags += [ "-Wl,-rpath=\$ORIGIN/../../ten_runtime/lib" ]
+  }
+
+  # Only export "ten" relevant symbols.
+  if (is_mac) {
+    ldflags += [
+      "-Xlinker",
+      "-exported_symbols_list",
+      "-Xlinker",
+      rebase_path("//build/ten_runtime/ld_script/mac"),
+    ]
+  } else if (is_linux) {
+    ldflags += [ "-Wl,--version-script=" +
+                 rebase_path("//build/ten_runtime/ld_script/linux") ]
+  }
+
+  deps = [
+    "addon",
+    "app",
+    "extension",
+    "internal",
+    "msg",
+    "ten_env",
+    "test",
+    "value",
+    "//core/src/ten_runtime:ten_runtime_library",
+  ]
+}
