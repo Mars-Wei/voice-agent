@@ -123,6 +123,16 @@
                 "user_id": "${env:USER_ID|user001}",
                 "agent_id": "${env:AGENT_ID|agent001}"
               }
+            },
+            {
+              "type": "extension",
+              "name": "openclaw_gateway_tool",
+              "addon": "openclaw_gateway_tool_python",
+              "extension_group": "default",
+              "property": {
+                "gateway_url": "${env:OPENCLAW_GATEWAY_URL|ws://127.0.0.1:18789}",
+                "gateway_token": "${env:OPENCLAW_GATEWAY_TOKEN|}"
+              }
             }
           ],
           "connections": [
@@ -150,6 +160,9 @@
                     },
                     {
                       "extension": "mem_retrieve_tool"
+                    },
+                    {
+                      "extension": "openclaw_gateway_tool"
                     }
                   ]
                 }
