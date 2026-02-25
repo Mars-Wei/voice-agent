@@ -558,7 +558,7 @@ public final class DaggerVoiceAgentApp_HiltComponents_SingletonC {
     }
 
     @Override
-    public void injectVoiceAgentApp(VoiceAgentApp voiceAgentApp) {
+    public void injectVoiceAgentApp(VoiceAgentApp arg0) {
     }
 
     @Override

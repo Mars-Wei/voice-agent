@@ -52,9 +52,9 @@ com.ten.voiceagent.app-jetified-lifecycle-viewmodel-compose-2.7.0-50 /Users/mars
 com.ten.voiceagent.app-jetified-foundation-layout-release-51 /Users/mars/.gradle/caches/transforms-3/e82b83fe7595fff8c333eb3ef07c0a98/transformed/jetified-foundation-layout-release/res
 com.ten.voiceagent.app-jetified-activity-ktx-1.8.2-52 /Users/mars/.gradle/caches/transforms-3/ece1707180a9fe061bd39caf9062747a/transformed/jetified-activity-ktx-1.8.2/res
 com.ten.voiceagent.app-jetified-savedstate-ktx-1.2.1-53 /Users/mars/.gradle/caches/transforms-3/fa97f4f33a92c92216e31072fd3fc63e/transformed/jetified-savedstate-ktx-1.2.1/res
-com.ten.voiceagent.app-resValues-54 /Users/mars/code/voice-agent/android-app/app/build/generated/res/resValues/debug
-com.ten.voiceagent.app-packageDebugResources-55 /Users/mars/code/voice-agent/android-app/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
-com.ten.voiceagent.app-packageDebugResources-56 /Users/mars/code/voice-agent/android-app/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
-com.ten.voiceagent.app-merged_res-57 /Users/mars/code/voice-agent/android-app/app/build/intermediates/merged_res/debug
-com.ten.voiceagent.app-debug-58 /Users/mars/code/voice-agent/android-app/app/src/debug/res
-com.ten.voiceagent.app-main-59 /Users/mars/code/voice-agent/android-app/app/src/main/res
+com.ten.voiceagent.app-resValues-54 /Users/mars/home/code/voice-agent/android-app/app/build/generated/res/resValues/debug
+com.ten.voiceagent.app-packageDebugResources-55 /Users/mars/home/code/voice-agent/android-app/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.ten.voiceagent.app-packageDebugResources-56 /Users/mars/home/code/voice-agent/android-app/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.ten.voiceagent.app-merged_res-57 /Users/mars/home/code/voice-agent/android-app/app/build/intermediates/merged_res/debug
+com.ten.voiceagent.app-debug-58 /Users/mars/home/code/voice-agent/android-app/app/src/debug/res
+com.ten.voiceagent.app-main-59 /Users/mars/home/code/voice-agent/android-app/app/src/main/res
