@@ -4,8 +4,8 @@
     {
       "type": "system",
       "name": "ten_runtime_go",
-      "version": "0.11.51",
-      "hash": "da58082fa1e8350998027c43751dc44025f47d00a78e039b5238629db20d7304",
+      "version": "0.11.55",
+      "hash": "17176211a7faecce333f298bf8bd762ea8a8c0462a80fce7b600f4194c9c5546",
       "dependencies": [
         {
           "type": "system",
@@ -744,10 +744,40 @@
       "path": "../../../ten_packages/extension/vision_analyze_tool_python"
     },
     {
+      "type": "extension",
+      "name": "mem_retrieve_tool_python",
+      "version": "0.11.52",
+      "hash": "0526974a13b2e3e0b91008a10cb93a3d279edc46adc6ca25883ab617c560c20f",
+      "dependencies": [
+        {
+          "type": "system",
+          "name": "ten_runtime_python"
+        }
+      ],
+      "path": "../../../ten_packages/extension/mem_retrieve_tool_python"
+    },
+    {
+      "type": "extension",
+      "name": "openclaw_gateway_tool_python",
+      "version": "0.1.0",
+      "hash": "9cb0085da1e094c0edcbf556ecc0e85dc07d2efef1f2e67cad0dd3ebfabcb05a",
+      "dependencies": [
+        {
+          "type": "system",
+          "name": "ten_runtime_python"
+        },
+        {
+          "type": "system",
+          "name": "ten_ai_base"
+        }
+      ],
+      "path": "../../../ten_packages/extension/openclaw_gateway_tool_python"
+    },
+    {
       "type": "system",
       "name": "ten_runtime_python",
-      "version": "0.11.51",
-      "hash": "b2e575a3fcacdeed63b5fc5a53b406ed45c965b277b1304aee7a37e4c49b6a6c",
+      "version": "0.11.55",
+      "hash": "5f4edb09f08b00e9118737186362dad07d827b61728aa35ed5948ede09191f6b",
       "dependencies": [
         {
           "type": "system",
@@ -768,8 +798,8 @@
     {
       "type": "system",
       "name": "ten_runtime",
-      "version": "0.11.51",
-      "hash": "5f68fd4f9db0ab928d886301152618377573596948a15734678368122b6d1931",
+      "version": "0.11.55",
+      "hash": "4ad4d28545f0c9a94ac567d2c87897883d23394198b3648fff4b84948e86c948",
       "supports": [
         {
           "os": "linux",
@@ -792,8 +822,8 @@
     {
       "type": "addon_loader",
       "name": "python_addon_loader",
-      "version": "0.11.51",
-      "hash": "3fd22575d533223c0bc1ecbec0dcf91f937288abf7121cdd7c751cbcf342df64",
+      "version": "0.11.55",
+      "hash": "cd5b865cd9aff804634854c525ce141957a6361af8be830135e279028fc4fb0c",
       "dependencies": [
         {
           "type": "system",

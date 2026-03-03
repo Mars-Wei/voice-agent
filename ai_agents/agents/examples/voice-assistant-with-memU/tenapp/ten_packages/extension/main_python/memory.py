@@ -15,16 +15,6 @@ class MemoryStore(ABC):
         self.env = env
 
     @abstractmethod
-    async def memorize(
-        self,
-        conversation: List[Dict[str, str]],
-        user_id: str,
-        user_name: str,
-        agent_id: str,
-        agent_name: str,
-    ) -> None: ...
-
-    @abstractmethod
     async def retrieve_user_context(
         self, user_id: str, agent_id: str,
     )->str: ...
@@ -40,49 +30,9 @@ class MemoryStore(ABC):
     )->str: ...
 
     @abstractmethod
-    async def retrieve_default_categories(
-        self, user_id: str, agent_id: str
-    ) -> Any: ...
-
-    @abstractmethod
-    async def retrieve_related_clustered_categories(
-        self, user_id: str, agent_id: str, category_query: str
-    ) -> Any: ...
-
-    @abstractmethod
-    def parse_default_categories(self, data: Any) -> Dict[str, Any]:
-        """
-        Normalize provider-specific response into a unified dict:
-        {
-          "basic_stats": {"total_categories": int, "total_memories": int, "user_id": str|None, "agent_id": str|None},
-          "categories": [
-            {"name": str, "type": str|None, "memory_count": int, "is_active": bool|None, "recent_memories": [{"date": str, "content": str}], "summary": str|None}
-          ]
-        }
-        """
-        ...
-
-    @abstractmethod
-    def parse_related_clustered_categories(self, data: Any) -> Dict[str, Any]:
-        """
-        Normalize provider-specific response for related categories into a unified dict:
-        {
-          "query": str,
-          "total_categories": int,
-          "categories": [
-            {
-              "name": str,
-              "summary": str|None,
-              "description": str|None,
-              "similarity_score": float|None,
-              "memory_count": int,
-              "recent_memories": [{"date": str, "content": str}]
-            }
-          ]
-        }
-        """
-        ...
-
+    async def add_message_to_zep(
+        self, user_id: str, agent_id: str, messages: List[Message]
+    )-> None: ...
 
 class ZepMemoryStore(MemoryStore):
     """
@@ -144,62 +94,18 @@ class ZepMemoryStore(MemoryStore):
             )
             raise
 
-    async def memorize(
-        self,
-        conversation: List[Dict[str, str]],
-        user_id: str,
-        user_name: str,
-        agent_id: str,
-        agent_name: str,
-    ) -> None:
-        """
-        Store conversation in Zep memory.
-        Adds user and assistant messages to the thread.
-        """
-        try:
-            thread_id = self._get_thread_id(user_id, agent_id)
-
-            # Ensure user and thread exist
-            await self._ensure_user_and_thread(user_id, user_name, thread_id)
-
-            # Convert conversation to Zep Message format
-            messages = []
-            for msg in conversation:
-                role = msg.get("role", "")
-                content = msg.get("content", "")
-                if role in ["user", "assistant"] and content:
-                    name = user_name if role == "user" else agent_name or "Assistant"
-                    messages.append(
-                        Message(
-                            name=name,
-                            content=content,
-                            role=role
-                        )
-                    )
-
-            if messages:
-                # Add messages to thread
-                await self.client.thread.add_messages(
-                    thread_id=thread_id,
-                    messages=messages
-                )
-                self.env.log_info(
-                    f"[ZepMemoryStore] Stored {len(messages)} messages to thread {thread_id}"
-                )
-        except Exception as e:
-            self.env.log_error(
-                f"[ZepMemoryStore] Error memorizing conversation: {e}"
-            )
-            raise
 
     async def retrieve_user_context(self, user_id: str, agent_id: str)-> str:
         try:
             thread_id = self._get_thread_id(user_id, agent_id)
+            self.env.log_info(f"[ZepMemoryStore] thread_id: {thread_id}")
             context_response = await self.client.thread.get_user_context(
                 thread_id=thread_id,
                 mode="basic"
             )
-            return context_response
+
+            self.env.log_info(f"[ZepMemoryStore] retrieve_user_context, thread_id: {thread_id}, context_response: {context_response}")
+            return context_response.context
         except Exception as e:
             self.env.log_error(
                 f"[ZepMemoryStore] Error retrieving user_context: {e}"
@@ -225,6 +131,7 @@ class ZepMemoryStore(MemoryStore):
     async def retrieve_user_preferences_context(self, user_id: str, user_message: str)->str:
         try:
             # thread_id = self._get_thread_id(user_id, agent_id)
+            self.env.log_info(f"[ZepMemoryStore] user_id: {user_id}")
             search_results = await self.client.graph.search(
                 user_id=user_id,
                 query=user_message,
@@ -243,147 +150,15 @@ class ZepMemoryStore(MemoryStore):
             )
             return ""
 
-
-    async def retrieve_default_categories(
-        self, user_id: str, agent_id: str
-    ) -> Any:
-        """
-        Retrieve default memory categories from Zep.
-        For Zep, we get user context from the thread.
-        """
+    async def add_message_to_zep(self, user_id: str, agent_id: str, messages: List[Message]):
+        """Add user message to Zep thread"""
         try:
             thread_id = self._get_thread_id(user_id, agent_id)
-
-            # Get user context from Zep
-            context_response = await self.client.thread.get_user_context(
+            self.env.log_info(f"[ZepMemoryStore] thread_id: {thread_id}")
+            await self.client.thread.add_messages(
                 thread_id=thread_id,
-                mode="basic"
+                messages=messages
             )
-
-            context_block = context_response.context if hasattr(context_response, "context") else ""
-
-            # Format as default categories structure
-            # Zep doesn't have explicit categories like memU, so we create a simple structure
-            result = {
-                "basic_stats": {
-                    "total_categories": 1 if context_block else 0,
-                    "total_memories": 0,  # Zep doesn't provide explicit count
-                    "user_id": user_id,
-                    "agent_id": agent_id,
-                },
-                "categories": []
-            }
-
-            if context_block:
-                # Create a single category for the context
-                result["categories"].append({
-                    "name": "conversation_context",
-                    "type": "context",
-                    "memory_count": 0,
-                    "is_active": True,
-                    "recent_memories": [],
-                    "summary": context_block
-                })
-
-            return result
+            self.env.log_info(f"[ZepMemoryStore] Stored {len(messages)} message to Zep thread {thread_id}")
         except Exception as e:
-            self.env.log_error(
-                f"[ZepMemoryStore] Error retrieving default categories: {e}"
-            )
-            # Return empty structure on error
-            return {
-                "basic_stats": {
-                    "total_categories": 0,
-                    "total_memories": 0,
-                    "user_id": user_id,
-                    "agent_id": agent_id,
-                },
-                "categories": []
-            }
-
-    async def retrieve_related_clustered_categories(
-        self, user_id: str, agent_id: str, category_query: str
-    ) -> Any:
-        """
-        Retrieve related memory using Zep's user context.
-        For semantic search, we use thread.get_user_context with the query.
-        """
-        try:
-            thread_id = self._get_thread_id(user_id, agent_id)
-
-            self.env.log_info(
-                f"[ZepMemoryStore] Retrieving related memory with query: '{category_query}'"
-            )
-
-            # Get user context from Zep (this includes semantic search)
-            context_response = await self.client.thread.get_user_context(
-                thread_id=thread_id,
-                mode="basic"
-            )
-
-            context_block = context_response.context if hasattr(context_response, "context") else ""
-
-            # Format as related clustered categories structure
-            result = {
-                "query": category_query,
-                "total_categories": 1 if context_block else 0,
-                "categories": []
-            }
-
-            if context_block:
-                # Create a single category for the context
-                result["categories"].append({
-                    "name": "related_context",
-                    "summary": context_block,
-                    "description": f"Context relevant to: {category_query}",
-                    "similarity_score": None,  # Zep doesn't provide explicit similarity scores
-                    "memory_count": 0,
-                    "recent_memories": []
-                })
-
-            self.env.log_info(
-                f"[ZepMemoryStore] Retrieved related memory (length: {len(context_block)})"
-            )
-
-            return result
-        except Exception as e:
-            self.env.log_error(
-                f"[ZepMemoryStore] Error retrieving related clustered categories: {e}"
-            )
-            return {
-                "query": category_query,
-                "total_categories": 0,
-                "categories": []
-            }
-
-    def parse_default_categories(self, data: Any) -> Dict[str, Any]:
-        """
-        Parse Zep default categories response.
-        Data is already in the expected format from retrieve_default_categories.
-        """
-        if isinstance(data, dict):
-            return data
-        # If it's not a dict, return empty structure
-        return {
-            "basic_stats": {
-                "total_categories": 0,
-                "total_memories": 0,
-                "user_id": None,
-                "agent_id": None,
-            },
-            "categories": []
-        }
-
-    def parse_related_clustered_categories(self, data: Any) -> Dict[str, Any]:
-        """
-        Parse Zep related clustered categories response.
-        Data is already in the expected format from retrieve_related_clustered_categories.
-        """
-        if isinstance(data, dict):
-            return data
-        # If it's not a dict, return empty structure
-        return {
-            "query": "",
-            "total_categories": 0,
-            "categories": []
-        }
+            self.env.log_error(f"[ZepMemoryStore] Failed to add message to Zep: {e}")
