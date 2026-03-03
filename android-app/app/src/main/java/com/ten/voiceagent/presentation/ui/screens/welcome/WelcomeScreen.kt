@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,11 +18,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ten.voiceagent.data.api.PreferencesManager
 import com.ten.voiceagent.domain.model.AgentConfig
 import com.ten.voiceagent.presentation.ui.navigation.ConfigHolder
 import com.ten.voiceagent.presentation.ui.theme.Primary
@@ -37,6 +42,7 @@ fun WelcomeScreen(
     viewModel: WelcomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showServerConfigDialog by remember { mutableStateOf(false) }
 
     // Navigate when config is ready
     LaunchedEffect(uiState.config) {
@@ -44,6 +50,13 @@ fun WelcomeScreen(
             ConfigHolder.config = config
             onNavigateToChat(config)
         }
+    }
+
+    // Server configuration dialog
+    if (showServerConfigDialog) {
+        ServerConfigDialog(
+            onDismiss = { showServerConfigDialog = false }
+        )
     }
 
     Scaffold { paddingValues ->
@@ -111,6 +124,120 @@ fun WelcomeScreen(
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            // Hidden settings button in bottom right corner
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                Text(
+                    text = ".",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { showServerConfigDialog = true },
+                    color = Color.Transparent
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServerConfigDialog(
+    onDismiss: () -> Unit
+) {
+    var ip by remember { mutableStateOf(PreferencesManager.serverIp) }
+    var port by remember { mutableStateOf(PreferencesManager.serverPort) }
+    var ipError by remember { mutableStateOf(false) }
+    var portError by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "服务器设置",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = ip,
+                    onValueChange = {
+                        ip = it
+                        ipError = false
+                    },
+                    label = { Text("服务器 IP") },
+                    isError = ipError,
+                    supportingText = if (ipError) {
+                        { Text("请输入有效的 IP 地址") }
+                    } else null,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = port,
+                    onValueChange = {
+                        port = it
+                        portError = false
+                    },
+                    label = { Text("端口") },
+                    isError = portError,
+                    supportingText = if (portError) {
+                        { Text("请输入有效的端口号") }
+                    } else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "当前: ${PreferencesManager.getServerUrl()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("取消")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            // Validate
+                            val ipRegex = Regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}$")
+                            ipError = !ipRegex.matches(ip)
+                            portError = port.toIntOrNull() == null || port.toIntOrNull()!! < 1 || port.toIntOrNull()!! > 65535
+
+                            if (!ipError && !portError) {
+                                PreferencesManager.serverIp = ip
+                                PreferencesManager.serverPort = port
+                                onDismiss()
+                            }
+                        }
+                    ) {
+                        Text("保存")
+                    }
+                }
             }
         }
     }

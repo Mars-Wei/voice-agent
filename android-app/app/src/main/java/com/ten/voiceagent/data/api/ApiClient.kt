@@ -19,8 +19,10 @@ object ApiClient {
      * Base URL for the agent server.
      * For Android Emulator: Use 10.0.2.2 to access host's localhost
      * For Physical Device: Use actual IP address of the server
+     *
+     * Note: The actual URL is read from PreferencesManager at runtime.
      */
-    const val BASE_URL = "http://10.1.121.254:8080/"
+    private const val BASE_URL_PLACEHOLDER = "placeholder"
 
     /**
      * Connection timeout in seconds.
@@ -70,7 +72,7 @@ object ApiClient {
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(PreferencesManager.getServerUrl())
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

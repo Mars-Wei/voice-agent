@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
+import com.ten.voiceagent.data.api.PreferencesManager
 import com.ten.voiceagent.presentation.ui.navigation.VoiceAgentNavHost
 import com.ten.voiceagent.presentation.ui.theme.VoiceAgentTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,6 +49,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize PreferencesManager
+        PreferencesManager.init(this)
 
         setContent {
             VoiceAgentTheme {
