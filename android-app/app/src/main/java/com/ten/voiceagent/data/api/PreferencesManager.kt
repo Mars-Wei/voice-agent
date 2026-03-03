@@ -11,7 +11,7 @@ object PreferencesManager {
     private const val KEY_SERVER_IP = "server_ip"
     private const val KEY_SERVER_PORT = "server_port"
 
-    private const val DEFAULT_IP = "10.1.130.110"
+    private const val DEFAULT_IP = "10.1.130.133"
     private const val DEFAULT_PORT = "8080"
 
     private lateinit var prefs: SharedPreferences
