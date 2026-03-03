@@ -91,7 +91,7 @@ class WelcomeViewModel @Inject constructor(
 
     private suspend fun testStartAgent(config: AgentConfig): String = withContext(Dispatchers.IO) {
         try {
-            val serverUrl = ApiClient.BASE_URL.removeSuffix("/")
+            val serverUrl = ApiClient.baseUrl.removeSuffix("/")
             val url = URL("$serverUrl/start")
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "POST"

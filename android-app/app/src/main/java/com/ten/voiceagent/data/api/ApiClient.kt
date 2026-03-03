@@ -22,7 +22,7 @@ object ApiClient {
      *
      * Note: The actual URL is read from PreferencesManager at runtime.
      */
-    private const val BASE_URL_PLACEHOLDER = "placeholder"
+    val baseUrl: String get() = PreferencesManager.getServerUrl()
 
     /**
      * Connection timeout in seconds.
