@@ -177,6 +177,14 @@
                       "extension": "stt"
                     }
                   ]
+                },
+                {
+                  "name": "openclaw_reply_event",
+                  "source": [
+                    {
+                      "extension": "openclaw_gateway_tool"
+                    }
+                  ]
                 }
               ]
             },
