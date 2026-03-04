@@ -82,3 +82,13 @@ data class StopRequest(
     @SerializedName("channel_name")
     val channelName: String
 )
+
+/**
+ * Request body for ping to keep agent alive.
+ */
+data class PingRequest(
+    @SerializedName("request_id")
+    val requestId: String,
+    @SerializedName("channel_name")
+    val channelName: String
+)

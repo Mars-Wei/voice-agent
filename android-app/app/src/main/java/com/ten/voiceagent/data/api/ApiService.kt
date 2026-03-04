@@ -2,6 +2,7 @@ package com.ten.voiceagent.data.api
 
 import com.google.gson.annotations.SerializedName
 import com.ten.voiceagent.data.api.dto.GenerateTokenRequest
+import com.ten.voiceagent.data.api.dto.PingRequest
 import com.ten.voiceagent.data.api.dto.StartAgentRequest
 import com.ten.voiceagent.data.api.dto.StopRequest
 import com.ten.voiceagent.domain.model.AgoraTokenResponse
@@ -52,7 +53,7 @@ interface ApiService {
      * Endpoint: POST /ping
      */
     @POST("ping")
-    suspend fun ping(): Response<ApiResponse<String>>
+    suspend fun ping(@Body request: PingRequest): Response<ApiResponse<String>>
 
     /**
      * Generate Agora RTC/RTM token.

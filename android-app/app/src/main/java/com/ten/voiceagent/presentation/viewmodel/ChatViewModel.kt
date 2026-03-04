@@ -20,7 +20,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -69,6 +71,9 @@ class ChatViewModel @Inject constructor(
 
     // Store current agent config
     private var currentConfig: AgentConfig? = null
+
+    // Ping job to keep agent alive
+    private var pingJob: kotlinx.coroutines.Job? = null
 
     init {
         observeRtcState()
@@ -283,6 +288,9 @@ class ChatViewModel @Inject constructor(
                     )
                 }
 
+                // Start ping job to keep agent alive
+                startPingAgent()
+
                 Log.d(TAG, "Connected successfully")
 
             } catch (e: Exception) {
@@ -295,10 +303,35 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
+     * Start periodic ping to keep agent alive.
+     */
+    private fun startPingAgent() {
+        pingJob?.cancel()
+        pingJob = viewModelScope.launch {
+            while (isActive) {
+                delay(30000) // Ping every 30 seconds
+                val channelName = currentConfig?.channel
+                if (channelName != null) {
+                    chatRepository.ping(channelName)
+                        .onSuccess {
+                            Log.d(TAG, "Ping successful for channel: $channelName")
+                        }
+                        .onFailure { error ->
+                            Log.w(TAG, "Ping failed: ${error.message}")
+                        }
+                }
+            }
+        }
+    }
+
+    /**
      * Disconnect from the voice agent service.
      */
     fun disconnect() {
         viewModelScope.launch {
+            pingJob?.cancel()
+            pingJob = null
+
             val channelName = currentConfig?.channel ?: return@launch
             Log.d(TAG, "Disconnecting from agent: $channelName")
             rtcManager.leaveChannel()

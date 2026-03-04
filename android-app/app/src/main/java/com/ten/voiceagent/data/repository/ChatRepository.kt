@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.ten.voiceagent.data.api.ApiService
 import com.ten.voiceagent.data.api.dto.GenerateTokenRequest
+import com.ten.voiceagent.data.api.dto.PingRequest
 import com.ten.voiceagent.data.api.dto.StartAgentRequest
 import com.ten.voiceagent.data.api.dto.StopRequest
 import com.ten.voiceagent.domain.model.AgoraTokenResponse
@@ -116,9 +117,13 @@ class ChatRepository @Inject constructor(
     /**
      * Check if the agent service is running.
      */
-    suspend fun ping(): Result<Unit> {
+    suspend fun ping(channelName: String): Result<Unit> {
         return try {
-            val response = apiService.ping()
+            val request = PingRequest(
+                requestId = UUID.randomUUID().toString(),
+                channelName = channelName
+            )
+            val response = apiService.ping(request)
             val body = response.body()
 
             if (response.isSuccessful && body?.isSuccess == true) {
