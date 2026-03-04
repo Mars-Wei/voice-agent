@@ -142,8 +142,7 @@ class MemRetrieveToolExtension(AsyncLLMToolBaseExtension):
         try:
             zep_start = time.perf_counter()
             context_response = await self.zep_client.thread.get_user_context(
-                thread_id=thread_id,
-                mode="basic"
+                thread_id=thread_id
             )
             zep_end = time.perf_counter()
             zep_retrieval_ms = round((zep_end - zep_start) * 1000, 2)
