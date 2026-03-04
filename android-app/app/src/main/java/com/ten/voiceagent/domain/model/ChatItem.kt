@@ -5,6 +5,7 @@ package com.ten.voiceagent.domain.model
  */
 data class ChatItem(
     val id: String,
+    val streamId: Int = 0,
     val text: String,
     val isUser: Boolean,
     val timestamp: Long = System.currentTimeMillis(),

@@ -61,8 +61,11 @@ class ChatViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent: SharedFlow<NavigationEvent> = _navigationEvent.asSharedFlow()
 
-    // Message buffer for streaming responses
+    // Message buffer for streaming responses (key: streamId + isUser)
     private val messageBuffer = mutableMapOf<String, ChatItem>()
+
+    // Generate buffer key from streamId and isUser
+    private fun getBufferKey(streamId: Int, isUser: Boolean): String = "${streamId}_$isUser"
 
     // Store current agent config
     private var currentConfig: AgentConfig? = null
@@ -142,29 +145,48 @@ class ChatViewModel @Inject constructor(
     private fun handleTranscribeMessage(message: ChatMessage) {
         val isUser = message.role == MessageRole.USER
         val currentTime = System.currentTimeMillis()
+        val bufferKey = getBufferKey(message.streamId, isUser)
 
         if (message.isFinal) {
-            // Final message, add to list
-            val chatItem = ChatItem(
-                id = message.id,
-                text = message.text,
-                isUser = isUser,
-                timestamp = currentTime,
-                status = MessageStatus.Delivered
-            )
-            _uiState.update { state ->
-                state.copy(messages = state.messages + chatItem)
-            }
-            messageBuffer.remove(message.id)
-        } else {
-            // Streaming message, update buffer
-            val existingItem = messageBuffer[message.id]
+            // Final message, update or add to list
+            val existingItem = messageBuffer[bufferKey]
             if (existingItem != null) {
-                val updatedItem = existingItem.copy(text = message.text)
-                messageBuffer[message.id] = updatedItem
+                // Update existing item with final text
+                val updatedItem = existingItem.copy(
+                    text = message.text,
+                    status = MessageStatus.Delivered
+                )
+                messageBuffer.remove(bufferKey)
                 _uiState.update { state ->
                     val updatedMessages = state.messages.map {
-                        if (it.id == message.id) updatedItem else it
+                        if (it.id == existingItem.id) updatedItem else it
+                    }
+                    state.copy(messages = updatedMessages)
+                }
+            } else {
+                // No streaming message existed, add new item
+                val chatItem = ChatItem(
+                    id = message.id,
+                    streamId = message.streamId,
+                    text = message.text,
+                    isUser = isUser,
+                    timestamp = currentTime,
+                    status = MessageStatus.Delivered
+                )
+                _uiState.update { state ->
+                    state.copy(messages = state.messages + chatItem)
+                }
+            }
+        } else {
+            // Streaming message, update buffer
+            val existingItem = messageBuffer[bufferKey]
+            if (existingItem != null) {
+                // Append new text to existing item
+                val updatedItem = existingItem.copy(text = message.text)
+                messageBuffer[bufferKey] = updatedItem
+                _uiState.update { state ->
+                    val updatedMessages = state.messages.map {
+                        if (it.id == existingItem.id) updatedItem else it
                     }
                     state.copy(messages = updatedMessages)
                 }
@@ -172,12 +194,13 @@ class ChatViewModel @Inject constructor(
                 // New streaming message
                 val chatItem = ChatItem(
                     id = message.id,
+                    streamId = message.streamId,
                     text = message.text,
                     isUser = isUser,
                     timestamp = currentTime,
                     status = MessageStatus.Sending
                 )
-                messageBuffer[message.id] = chatItem
+                messageBuffer[bufferKey] = chatItem
                 _uiState.update { state ->
                     state.copy(messages = state.messages + chatItem)
                 }
@@ -197,6 +220,7 @@ class ChatViewModel @Inject constructor(
         if (message.isReasoning) {
             val chatItem = ChatItem(
                 id = message.id,
+                streamId = message.streamId,
                 text = message.text,
                 isUser = false,
                 timestamp = System.currentTimeMillis(),
@@ -305,8 +329,10 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             // Add user message to the local list
             val messageId = UUID.randomUUID().toString()
+            val streamId = rtcManager.getCurrentUid()
             val userMessage = ChatItem(
                 id = messageId,
+                streamId = streamId,
                 text = text,
                 isUser = true,
                 status = MessageStatus.Sending
