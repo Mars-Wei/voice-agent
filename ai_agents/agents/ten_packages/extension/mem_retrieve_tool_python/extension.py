@@ -116,7 +116,7 @@ class MemRetrieveToolExtension(AsyncLLMToolBaseExtension):
     async def _retrieve_memory(self, args: dict) -> Any:
         if "query" not in args:
             raise ValueError("Missing required parameter: query")
-        
+
         query = args["query"]
         user_id = self.config.user_id
         agent_id = self.config.agent_id
@@ -138,12 +138,13 @@ class MemRetrieveToolExtension(AsyncLLMToolBaseExtension):
                 "context": "",
             }
 
-        
+
         try:
             zep_start = time.perf_counter()
             context_response = await self.zep_client.thread.get_user_context(
-                thread_id=thread_id,
-                mode="basic"
+                thread_id=thread_id
+                # thread_id=thread_id,
+                # mode="basic"
             )
             zep_end = time.perf_counter()
             zep_retrieval_ms = round((zep_end - zep_start) * 1000, 2)
