@@ -26,7 +26,7 @@ DEFAULT_CLIENT_MODE = "webchat"
 
 @dataclass
 class OpenclawConfig(BaseConfig):
-    gateway_url: str = "ws://127.0.0.1:18789"
+    gateway_url: str = ""
     gateway_token: str = ""
     gateway_password: str = ""
     gateway_scopes: str = ""

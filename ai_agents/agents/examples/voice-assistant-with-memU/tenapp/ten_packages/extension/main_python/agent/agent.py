@@ -148,6 +148,14 @@ class Agent:
                         metadata=asr.get("metadata", {}),
                     )
                 )
+            elif data.get_name() == "rtm_message_event":
+                msg_json, _ = data.get_property_to_json(None)
+                msg = json.loads(msg_json)
+                message_content = msg.get("message", "")
+                if not isinstance(message_content, (dict, str)):
+                    self.ten_env.log_warn(
+                        "rtm_message_event message has unsupported type"
+                    )
             else:
                 self.ten_env.log_warn(f"Unhandled data: {data.get_name()}")
         except Exception as e:
@@ -223,3 +231,41 @@ class Agent:
             self._asr_consumer.cancel()
         if self._llm_consumer:
             self._llm_consumer.cancel()
+
+    def _normalize_openclaw_text(self, value: str) -> str:
+        return " ".join(value.split()).strip()
+
+    def _build_openclaw_followup_input(
+        self, task_result: dict[str, Any]
+    ) -> str:
+        task_id = self._normalize_openclaw_text(
+            str(task_result.get("task_id", ""))
+        )
+        summary = self._normalize_openclaw_text(
+            str(task_result.get("summary", ""))
+        )
+        reply_text = self._normalize_openclaw_text(
+            str(task_result.get("reply_text", ""))
+        )
+        error = self._normalize_openclaw_text(str(task_result.get("error", "")))
+        ts = int(task_result.get("reply_ts", 0) or 0)
+        status = "failed" if error and not reply_text else "completed"
+        result_source = reply_text or error or "no textual result"
+        result_brief = result_source[:500]
+
+        return (
+            "Delegated task completed. "
+            f"status={status}; "
+            f"task_id={task_id or 'unknown'}; "
+            f"summary={summary or 'n/a'}; "
+            f"result={result_brief}; "
+            f"ts={ts or 'n/a'}. "
+            "Use this as final task result context and reply to the user with a concise completion update."
+        )
+
+    async def handle_openclaw_reply(self, task_result: dict[str, Any]):
+        """
+        Feed delegated task result back into the primary LLM flow.
+        """
+        followup_input = self._build_openclaw_followup_input(task_result)
+        await self.queue_llm_input(followup_input)

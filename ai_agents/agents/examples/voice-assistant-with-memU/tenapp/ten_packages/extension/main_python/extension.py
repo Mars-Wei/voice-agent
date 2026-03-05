@@ -9,6 +9,7 @@ from ten_runtime import (
     AsyncTenEnv,
     Cmd,
     Data,
+    Loc
 )
 
 from .agent.agent import Agent
@@ -121,13 +122,6 @@ class MainControlExtension(AsyncExtension):
             for s in sentences:
                 await self._send_to_tts(s, False)
 
-            # Early send: if sentence_fragment exceeds min_tts_chunk_size, send it to TTS
-            # This reduces latency for first TTS audio when LLM outputs long text without punctuation
-            min_chunk_size = getattr(self.config, 'min_tts_chunk_size', 5)
-            if self.sentence_fragment and len(self.sentence_fragment) >= min_chunk_size:
-                await self._send_to_tts(self.sentence_fragment, False)
-                self.sentence_fragment = ""
-
         if event.is_final and event.type == "message":
             remaining_text = self.sentence_fragment or ""
             self.sentence_fragment = ""
@@ -160,6 +154,10 @@ class MainControlExtension(AsyncExtension):
         await self.agent.on_cmd(cmd)
 
     async def on_data(self, ten_env: AsyncTenEnv, data: Data):
+        data_name = data.get_name()
+        if data_name == "openclaw_reply_event":
+            await self._handle_openclaw_reply_event(data)
+            return
         ten_env.log_info(f"[MainControlExtension] on_data: {data.get_name()}, {data}")
         await self.agent.on_data(data)
 
@@ -349,3 +347,44 @@ class MainControlExtension(AsyncExtension):
         query_start = sep_index + len(separator)
         query= mem_content[query_start:]
         return query.strip()
+
+    async def _send_rtm_message(self, payload: dict) -> None:
+        message = json.dumps(payload)
+        cmd = Cmd.create("publish")
+        cmd.set_dests([Loc("", "", "agora_rtm")])
+        cmd.set_property_buf("message", message.encode())
+        await self.ten_env.send_cmd(cmd)
+
+    async def _handle_openclaw_reply_event(self, data: Data) -> None:
+        payload_json, err = data.get_property_to_json(None)
+        if err:
+            self.ten_env.log_error(
+                f"[MainControlExtension] failed to parse openclaw_reply_event: {err}"
+            )
+            return
+        payload = json.loads(payload_json)
+        ts = int(payload.get("reply_ts", int(time.time() * 1000)))
+        phase = str(payload.get("agent_phase", "")).strip()
+        if phase:
+            await self._send_rtm_message(
+                {"data_type": "openclaw_phase", "phase": phase, "ts": ts}
+            )
+        error = str(payload.get("error", "")).strip()
+        reply_text = str(payload.get("reply_text", "")).strip()
+        if error and not reply_text:
+            reply_text = f"OpenClaw error: {error}"
+        if not reply_text:
+            return
+        await self._send_rtm_message(
+            {"data_type": "openclaw_result", "text": reply_text, "ts": ts}
+        )
+        await self.agent.handle_openclaw_reply(
+            {
+                "task_id": str(payload.get("task_id", "")).strip(),
+                "summary": str(payload.get("summary", "")).strip(),
+                "reply_text": reply_text,
+                "reply_ts": ts,
+                "error": error,
+                "agent_phase": phase,
+            }
+        )
