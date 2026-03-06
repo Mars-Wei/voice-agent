@@ -20,20 +20,21 @@ from ten_ai_base.types import (
 )
 
 TOOL_NAME = "claw_task_delegate"
-DEFAULT_CLIENT_ID = "webchat-ui"
-DEFAULT_CLIENT_MODE = "webchat"
+DEFAULT_CLIENT_ID = "cli"
+DEFAULT_CLIENT_MODE = "cli"
 
 
 @dataclass
 class OpenclawConfig(BaseConfig):
-    gateway_url: str = "ws://127.0.0.1:18789"
+    gateway_url: str = ""
     gateway_token: str = ""
     gateway_password: str = ""
     gateway_scopes: str = ""
     gateway_client_id: str = DEFAULT_CLIENT_ID
     gateway_client_mode: str = DEFAULT_CLIENT_MODE
     gateway_origin: str = ""
-    chat_session_key: str = "agent:main:main"
+    gateway_disable_origin_check: bool = True  # Don't send Origin header to avoid CORS issues
+    chat_session_key: str = "main"
     request_timeout_ms: int = 180000
     connect_timeout_ms: int = 10000
 
@@ -131,11 +132,10 @@ class OpenclawGatewayToolExtension(AsyncLLMToolBaseExtension):
         try:
             await self._ensure_connected()
             await self._request(
-                "chat.send",
+                "agent",
                 {
-                    "sessionKey": self.config.chat_session_key,
                     "message": summary,
-                    "deliver": False,
+                    "sessionKey": self.config.chat_session_key,
                     "idempotencyKey": task_id,
                 },
                 timeout_ms=self.config.request_timeout_ms,
@@ -170,9 +170,12 @@ class OpenclawGatewayToolExtension(AsyncLLMToolBaseExtension):
         self._hello_event.clear()
         self._connect_sent = False
         headers: dict[str, str] = {}
-        origin = str(self.config.gateway_origin or "").strip()
-        if origin:
-            headers["Origin"] = origin
+        # Only set Origin header if explicitly configured and not disabled
+        if (
+            not self.config.gateway_disable_origin_check
+            and self.config.gateway_origin
+        ):
+            headers["Origin"] = str(self.config.gateway_origin).strip()
         self.ws = await self.session.ws_connect(
             self.config.gateway_url,
             headers=headers if headers else None,
@@ -252,32 +255,24 @@ class OpenclawGatewayToolExtension(AsyncLLMToolBaseExtension):
             for s in str(self.config.gateway_scopes or "").split(",")
             if s.strip()
         ]
+        if not scopes:
+            scopes = ["operator.admin"]
+
         client_id = str(self.config.gateway_client_id or "").strip()
         client_mode = str(self.config.gateway_client_mode or "").strip()
-        if client_id != DEFAULT_CLIENT_ID:
-            self.ten_env.log_warn(
-                f"[openclaw_gateway_tool_python] overriding unsupported client id `{client_id}` -> `{DEFAULT_CLIENT_ID}`"
-            )
-            client_id = DEFAULT_CLIENT_ID
-        if client_mode != DEFAULT_CLIENT_MODE:
-            self.ten_env.log_warn(
-                f"[openclaw_gateway_tool_python] overriding unsupported client mode `{client_mode}` -> `{DEFAULT_CLIENT_MODE}`"
-            )
-            client_mode = DEFAULT_CLIENT_MODE
 
         payload = {
             "minProtocol": 3,
             "maxProtocol": 3,
             "client": {
                 "id": client_id,
-                "version": "0.1.0",
-                "platform": "ten",
+                "displayName": "python-client",
+                "version": "1.0.0",
+                "platform": "python",
                 "mode": client_mode,
             },
             "role": "operator",
             "scopes": scopes,
-            "caps": [],
-            "locale": "en-US",
         }
         if self.config.gateway_token:
             payload["auth"] = {"token": self.config.gateway_token}
