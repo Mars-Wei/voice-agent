@@ -1,12 +1,13 @@
 {
-  "gateway_url": "${env:OPENCLAW_GATEWAY_URL|ws://host.docker.internal:18789}",
-  "gateway_token": "${env:OPENCLAW_GATEWAY_TOKEN|4e4af2d1f874879ebff1ad2e593686e8aae8f4708263a0dd}",
+  "gateway_url": "${env:OPENCLAW_GATEWAY_URL|ws://127.0.0.1:18789}",
+  "gateway_token": "${env:OPENCLAW_GATEWAY_TOKEN|}",
   "gateway_password": "${env:OPENCLAW_GATEWAY_PASSWORD|}",
   "gateway_scopes": "${env:OPENCLAW_GATEWAY_SCOPES|}",
-  "gateway_client_id": "${env:OPENCLAW_GATEWAY_CLIENT_ID|webchat-ui}",
-  "gateway_client_mode": "${env:OPENCLAW_GATEWAY_CLIENT_MODE|webchat}",
+  "gateway_client_id": "${env:OPENCLAW_GATEWAY_CLIENT_ID|cli}",
+  "gateway_client_mode": "${env:OPENCLAW_GATEWAY_CLIENT_MODE|cli}",
   "gateway_origin": "${env:OPENCLAW_GATEWAY_ORIGIN|}",
-  "chat_session_key": "${env:OPENCLAW_CHAT_SESSION_KEY|agent:main:main}",
+  "gateway_disable_origin_check": "${env:OPENCLAW_GATEWAY_DISABLE_ORIGIN_CHECK|true}",
+  "chat_session_key": "${env:OPENCLAW_CHAT_SESSION_KEY|main}",
   "request_timeout_ms": 180000,
   "connect_timeout_ms": 10000
 }
