@@ -1,0 +1,4 @@
+{
+  "ws_url": "${env:CAR_CONTROL_WS_URL|ws://60.205.136.51:8765/robot_control}",
+  "timeout": 30
+}

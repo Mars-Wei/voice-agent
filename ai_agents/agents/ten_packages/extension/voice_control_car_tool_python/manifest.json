@@ -1,0 +1,129 @@
+{
+  "type": "extension",
+  "name": "voice_control_car_tool_python",
+  "version": "0.11.52",
+  "display_name": {
+    "locales": {
+      "en-US": {
+        "content": "Voice Control Car Tool"
+      },
+      "zh-CN": {
+        "content": "语音控制小车工具"
+      }
+    }
+  },
+  "description": {
+    "locales": {
+      "en-US": {
+        "content": "A tool extension for controlling a car via voice commands through WebSocket connection to ROS2"
+      },
+      "zh-CN": {
+        "content": "通过WebSocket连接ROS2发送语音指令控制小车的工具扩展"
+      }
+    }
+  },
+  "tags": [
+    "python",
+    "car",
+    "control",
+    "ros2",
+    "tool"
+  ],
+  "dependencies": [
+    {
+      "type": "system",
+      "name": "ten_runtime_python",
+      "version": "0.11.52"
+    }
+  ],
+  "package": {
+    "include": [
+      "manifest.json",
+      "property.json",
+      "pyproject.toml",
+      "tests/**.py",
+      "tests/pyproject.toml",
+      "tests/bin/*",
+      "requirements.txt",
+      "docs/**",
+      ".vscode/**",
+      "**.py"
+    ]
+  },
+  "api": {
+    "property": {
+      "properties": {
+        "ws_url": {
+          "type": "string",
+          "description": "WebSocket server URL for car control"
+        },
+        "timeout": {
+          "type": "int32",
+          "description": "Timeout in seconds for WebSocket operations"
+        }
+      }
+    },
+    "cmd_in": [
+      {
+        "name": "tool_call",
+        "property": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "args": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      }
+    ],
+    "cmd_out": [
+      {
+        "name": "tool_register",
+        "property": {
+          "properties": {
+            "tool": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "parameters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "parameters"
+              ]
+            }
+          }
+        },
+        "result": {
+          "property": {
+            "properties": {
+              "response": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "test": "tests/bin/start"
+  }
+}

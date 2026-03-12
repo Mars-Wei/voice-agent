@@ -41,6 +41,9 @@
     },
     {
       "path": "../../../ten_packages/extension/openclaw_gateway_tool_python"
+    },
+    {
+      "path": "../../../ten_packages/extension/voice_control_car_tool_python"
     }
   ],
   "scripts": {
