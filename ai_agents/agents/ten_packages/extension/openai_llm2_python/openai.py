@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import json
 import random
+import re
 from typing import AsyncGenerator, List
 from pydantic import BaseModel
 import requests
@@ -408,7 +409,17 @@ class OpenAIChatGPT:
             # Emit tool calls event (fire-and-forget)
             if tool_calls_list:
                 for tool_call in tool_calls_list:
-                    arguements = json.loads(tool_call["function"]["arguments"])
+                    try:
+                        arguements = json.loads(tool_call["function"]["arguments"])
+                    except json.JSONDecodeError as e:
+                        self.ten_env.log_error(
+                            f"Failed to parse tool arguments: {e}, raw: {tool_call['function']['arguments']}"
+                        )
+                        # Try to fix malformed Unicode escapes (e.g., \u9 -> \u0009)
+                        raw_args = tool_call["function"]["arguments"]
+                        fixed_args = re.sub(r'\\u([0-9a-fA-F]{1,3})(?![0-9a-fA-F])',
+                                            lambda m: '\\u' + m.group(1).zfill(4), raw_args)
+                        arguements = json.loads(fixed_args)
                     self.ten_env.log_info(
                         f"Tool call22: {choice.delta.model_dump_json()}"
                     )

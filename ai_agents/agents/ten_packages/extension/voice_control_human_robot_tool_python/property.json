@@ -1,0 +1,4 @@
+{
+  "server_url": "${env:ROBOT_SERVER_URL|http://182.92.132.168:6003}",
+  "timeout": 30
+}

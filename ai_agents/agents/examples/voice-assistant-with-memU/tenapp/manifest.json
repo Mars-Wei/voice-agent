@@ -31,6 +31,9 @@
       "path": "../../../ten_packages/extension/minimax_tts_websocket_python"
     },
     {
+      "path": "../../../ten_packages/extension/cosy_tts_python"
+    },
+    {
       "path": "../../../ten_packages/extension/message_collector2"
     },
     {

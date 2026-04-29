@@ -1,0 +1,130 @@
+{
+  "type": "extension",
+  "name": "voice_control_human_robot_tool_python",
+  "version": "0.11.52",
+  "display_name": {
+    "locales": {
+      "en-US": {
+        "content": "Voice Control Human Robot Tool"
+      },
+      "zh-CN": {
+        "content": "语音控制人形机器人工具"
+      }
+    }
+  },
+  "description": {
+    "locales": {
+      "en-US": {
+        "content": "A tool extension for controlling a humanoid robot via voice commands - includes action control and TTS"
+      },
+      "zh-CN": {
+        "content": "通过语音指令控制人形机器人的工具扩展，支持动作控制和人声合成"
+      }
+    }
+  },
+  "tags": [
+    "python",
+    "robot",
+    "humanoid",
+    "control",
+    "tts",
+    "tool"
+  ],
+  "dependencies": [
+    {
+      "type": "system",
+      "name": "ten_runtime_python",
+      "version": "0.11.52"
+    }
+  ],
+  "package": {
+    "include": [
+      "manifest.json",
+      "property.json",
+      "pyproject.toml",
+      "tests/**.py",
+      "tests/pyproject.toml",
+      "tests/bin/*",
+      "requirements.txt",
+      "docs/**",
+      ".vscode/**",
+      "**.py"
+    ]
+  },
+  "api": {
+    "property": {
+      "properties": {
+        "server_url": {
+          "type": "string",
+          "description": "Robot control server URL"
+        },
+        "timeout": {
+          "type": "int32",
+          "description": "Timeout in seconds for HTTP operations"
+        }
+      }
+    },
+    "cmd_in": [
+      {
+        "name": "tool_call",
+        "property": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "args": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        }
+      }
+    ],
+    "cmd_out": [
+      {
+        "name": "tool_register",
+        "property": {
+          "properties": {
+            "tool": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "parameters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "parameters"
+              ]
+            }
+          }
+        },
+        "result": {
+          "property": {
+            "properties": {
+              "response": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "test": "tests/bin/start"
+  }
+}

@@ -4,8 +4,8 @@
     {
       "type": "system",
       "name": "ten_runtime_go",
-      "version": "0.11.59",
-      "hash": "e83de1347ce4fabcbd090e80b8a4d42d1ab66f542d34e8c5da31a0102312afcb",
+      "version": "0.11.62",
+      "hash": "3edc0bf4cd95b531070a82273cea0b17fc482348dc66f51dd63902afcbf57337",
       "dependencies": [
         {
           "type": "system",
@@ -44,8 +44,8 @@
     {
       "type": "system",
       "name": "ten_ai_base",
-      "version": "0.7.35",
-      "hash": "c0559982cec45471511446cb7224b945ad614f269c9e0d3c199959bf9ede752f",
+      "version": "0.7.38",
+      "hash": "dd34d1790df0c9dee93e4087421785b818db4cd1934ae254077b9fc41d56d628",
       "dependencies": [
         {
           "type": "system",
@@ -119,6 +119,23 @@
     },
     {
       "type": "extension",
+      "name": "cosy_tts_python",
+      "version": "0.4.0",
+      "hash": "eaff006ccecab4af9b96589eace754b1f693641b8eb146efb9466b03b8b9b6e5",
+      "dependencies": [
+        {
+          "type": "system",
+          "name": "ten_runtime_python"
+        },
+        {
+          "type": "system",
+          "name": "ten_ai_base"
+        }
+      ],
+      "path": "../../../ten_packages/extension/cosy_tts_python"
+    },
+    {
+      "type": "extension",
       "name": "message_collector2",
       "version": "0.2.0",
       "hash": "b4cdc75c61ed572952e2f14bdb5c440f993d3a5bf2da6fe5f5cbb1b4d772a837",
@@ -189,8 +206,8 @@
     {
       "type": "system",
       "name": "ten_runtime_python",
-      "version": "0.11.59",
-      "hash": "bbac0af3333246c5c0a165b4f22ee819c48c3076045d1dde3ff86d0b94f06ca5",
+      "version": "0.11.62",
+      "hash": "3d67baae8b638167230a557d2fb79c3b4c6d78ea1999a045683d4f76474f8179",
       "dependencies": [
         {
           "type": "system",
@@ -211,8 +228,8 @@
     {
       "type": "system",
       "name": "ten_runtime",
-      "version": "0.11.59",
-      "hash": "90834f9586a7d01abe857860ea079657b2460e027f221d9ca9c2bd9c48ad08e8",
+      "version": "0.11.62",
+      "hash": "5970c9e6fdd8ade6044e10dafa8daaafdc3a77136038c0cdde28f0734abf2884",
       "supports": [
         {
           "os": "linux",
@@ -235,8 +252,8 @@
     {
       "type": "addon_loader",
       "name": "python_addon_loader",
-      "version": "0.11.59",
-      "hash": "208787a5ab31d8c35f090d7d68fbd920749f9897bbd1ac07ea7a4eeb310fad1b",
+      "version": "0.11.62",
+      "hash": "378db15568f2f19471c7c8e0d63464a51f6331fce494c473ece72bcaf3be3ed2",
       "dependencies": [
         {
           "type": "system",
